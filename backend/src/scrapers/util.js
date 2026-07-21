@@ -1,0 +1,68 @@
+const axios = require('axios');
+const cheerio = require('cheerio');
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const { env } = require('../config/env');
+
+const USER_AGENT =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+  '(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+
+async function fetchPage(url) {
+  try {
+    const { data } = await axios.get(url, {
+      headers: {
+        'User-Agent': USER_AGENT,
+        'Accept-Language': 'en-US,en;q=0.9',
+        Accept: 'text/html,application/xhtml+xml',
+      },
+      timeout: 45000,
+      maxRedirects: 5,
+    });
+    return data;
+  } catch (err) {
+    const code = err.code || (err.response ? `HTTP ${err.response.status}` : 'unknown');
+    throw new Error(`fetch failed [${code}] for ${url}: ${err.message}`);
+  }
+}
+
+// Returns page HTML. In MOCK_SCRAPE mode it reads a local fixture file
+// (fixtures/<SOURCE>.html) instead of hitting the network — used when the
+// real source sites are unreachable from the current environment.
+async function getPageHtml(url, source) {
+  if (env.MOCK_SCRAPE) {
+    const file = path.join(__dirname, 'fixtures', `${source}.html`);
+    console.log(`[scrape] MOCK mode — reading fixture: ${file}`);
+    return fs.readFileSync(file, 'utf8');
+  }
+  return fetchPage(url);
+}
+
+function hashContent(text) {
+  return crypto.createHash('sha256').update(text, 'utf8').digest('hex');
+}
+
+// Extract ONLY the notifications/announcements section of a page, not the
+// whole document (nav bars / footers change constantly and cause false positives).
+function extractSection(html, selectors) {
+  const $ = cheerio.load(html);
+  // Strip noise that changes but carries no exam info.
+  $('script, style, nav, footer, header, img, svg, link, noscript').remove();
+
+  for (const sel of selectors) {
+    const el = $(sel);
+    if (el.length) {
+      const text = el.first().text().replace(/\s+/g, ' ').trim();
+      if (text.length > 50) {
+        return { html: el.first().html(), text };
+      }
+    }
+  }
+
+  // Fallback: entire body with noise stripped.
+  const bodyText = $('body').text().replace(/\s+/g, ' ').trim();
+  return { html: $('body').html(), text: bodyText };
+}
+
+module.exports = { fetchPage, getPageHtml, hashContent, extractSection };

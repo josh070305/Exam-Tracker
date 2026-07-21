@@ -1,0 +1,26 @@
+{
+  "name": "exam-tracker-backend",
+  "version": "1.0.0",
+  "description": "Exam Update Tracker backend — monitors 6 recruitment boards (SSC, RRB, TNPSC, UPSC, IBPS, SBI) for changes and sends alerts via Telegram, WhatsApp, and email.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "axios": "^1.7.9",
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "node-cron": "^3.0.3",
+    "node-telegram-bot-api": "^0.66.0",
+    "nodemailer": "^6.9.16",
+    "openai": "^4.77.0",
+    "twilio": "^5.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}

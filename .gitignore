@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Env
+.env
+.env.local
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local data store (in-memory DB persistence)
+data/
+
+# OS
+.DS_Store
