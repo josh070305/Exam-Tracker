@@ -23,63 +23,63 @@ export const Header: React.FC<HeaderProps> = ({
   sseConnected,
 }) => {
   return (
-    <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800 text-white shadow-xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-        {/* Brand */}
+    <header className="sticky top-0 z-40 bg-zinc-950/85 backdrop-blur-xl border-b border-zinc-800/80 text-zinc-100 shadow-2xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+        {/* Brand Logo & Name */}
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-md shadow-indigo-500/20 ring-2 ring-white/10">
-            <span className="text-xl">🎯</span>
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-violet-700 flex items-center justify-center text-white font-black text-sm shadow-[0_0_15px_rgba(99,102,241,0.35)] ring-1 ring-white/20">
+            🎯
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-                GovExam Tracker
-              </h1>
-              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                Agentic v2
+              <span className="font-bold tracking-tight text-sm sm:text-base text-zinc-100">
+                GovExam
+              </span>
+              <span className="font-mono text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700">
+                AI Agent v2
               </span>
             </div>
-            <p className="text-xs text-slate-400 hidden sm:block">
-              Autonomous multi-board intelligence & alert system
+            <p className="text-[11px] text-zinc-500 hidden sm:block font-medium">
+              Autonomous multi-portal intelligence system
             </p>
           </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* SSE Live Status Indicator */}
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 text-xs">
+        {/* Live Controls */}
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          {/* Live SSE Stream Pulse */}
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-medium">
             <span
               className={`h-2 w-2 rounded-full ${
-                sseConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                sseConnected ? 'bg-emerald-400 live-pulse' : 'bg-amber-400'
               }`}
             />
-            <span className="text-slate-300 font-medium">
-              {sseConnected ? 'Live Stream' : 'Polling'}
+            <span className="text-zinc-300 text-[11px] font-semibold">
+              {sseConnected ? 'Real-time' : 'Reconnecting'}
             </span>
             {lastSynced && (
-              <span className="text-slate-500 border-l border-slate-700 pl-2 hidden md:inline">
-                Synced {relativeTime(lastSynced)}
+              <span className="text-zinc-500 border-l border-zinc-800 pl-2 hidden md:inline text-[11px]">
+                {relativeTime(lastSynced)}
               </span>
             )}
           </div>
 
-          {/* Seed Demo Data Button */}
+          {/* Seed Demo Button */}
           <button
             onClick={onSeedDemo}
             disabled={seeding}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl text-xs font-semibold shadow transition duration-150 disabled:opacity-50"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/80 rounded-xl text-xs font-semibold shadow-sm transition active:scale-95 disabled:opacity-50"
             title="Populate realistic Indian exam updates across SSC, RRB, UPSC, TNPSC"
           >
             <span>{seeding ? '⏳' : '🌱'}</span>
-            <span>{seeding ? 'Seeding...' : 'Demo Data'}</span>
+            <span>{seeding ? 'Seeding...' : 'Load Demo Data'}</span>
           </button>
 
-          {/* Trigger Scan Button */}
+          {/* Run Scan Button */}
           <button
             onClick={onCheckNow}
             disabled={checking}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-indigo-600/30 active:scale-95 disabled:opacity-60 transition duration-150"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(99,102,241,0.3)] active:scale-95 transition disabled:opacity-50"
           >
             {checking ? (
               <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
@@ -95,21 +95,21 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex gap-1 sm:gap-2 border-t border-slate-800/80 pt-1 overflow-x-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex gap-1 sm:gap-2 border-t border-zinc-800/60 pt-0.5 overflow-x-auto">
         {[
-          { id: 'feed', label: 'Feed & Analytics', icon: '📢' },
+          { id: 'feed', label: 'Activity Feed', icon: '⚡' },
           { id: 'kb', label: 'Knowledge Base', icon: '📚' },
           { id: 'console', label: 'Agent Console', icon: '🤖' },
-          { id: 'telegram', label: 'Telegram Simulator', icon: '💬' },
-          { id: 'prefs', label: 'Alert Settings', icon: '⚙️' },
+          { id: 'telegram', label: 'Telegram Bot', icon: '💬' },
+          { id: 'prefs', label: 'Settings', icon: '⚙️' },
         ].map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id as any)}
-            className={`flex items-center gap-1.5 px-3.5 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-all duration-150 whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3.5 py-2.5 text-xs sm:text-sm font-medium border-b-2 transition duration-150 whitespace-nowrap ${
               tab === t.id
-                ? 'border-indigo-500 text-white bg-slate-800/60 rounded-t-lg'
-                : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'
+                ? 'border-indigo-500 text-zinc-100 font-semibold'
+                : 'border-transparent text-zinc-400 hover:text-zinc-200'
             }`}
           >
             <span>{t.icon}</span>

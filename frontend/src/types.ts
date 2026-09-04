@@ -74,12 +74,12 @@ export interface UserDoc {
 export const SOURCES = ['SSC', 'RRB', 'TNPSC', 'UPSC', 'IBPS', 'SBI'] as const;
 
 export const TYPES = [
-  { key: 'new_exam', label: 'New Exam', bar: 'bg-blue-500', badge: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
-  { key: 'date_change', label: 'Date Change', bar: 'bg-amber-500', badge: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-500' },
-  { key: 'admit_card', label: 'Admit Card', bar: 'bg-purple-500', badge: 'bg-purple-50 text-purple-700 border-purple-200', dot: 'bg-purple-500' },
-  { key: 'result', label: 'Result', bar: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
-  { key: 'eligibility_revised', label: 'Eligibility', bar: 'bg-rose-500', badge: 'bg-rose-50 text-rose-700 border-rose-200', dot: 'bg-rose-500' },
-  { key: 'corrigendum', label: 'Corrigendum', bar: 'bg-orange-500', badge: 'bg-orange-50 text-orange-700 border-orange-200', dot: 'bg-orange-500' },
+  { key: 'new_exam', label: 'New Exam', bar: 'bg-sky-500', badge: 'bg-sky-500/10 text-sky-400 border-sky-500/25', dot: 'bg-sky-400' },
+  { key: 'date_change', label: 'Date Change', bar: 'bg-amber-500', badge: 'bg-amber-500/10 text-amber-400 border-amber-500/25', dot: 'bg-amber-400' },
+  { key: 'admit_card', label: 'Admit Card', bar: 'bg-purple-500', badge: 'bg-purple-500/10 text-purple-400 border-purple-500/25', dot: 'bg-purple-400' },
+  { key: 'result', label: 'Result', bar: 'bg-emerald-500', badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25', dot: 'bg-emerald-400' },
+  { key: 'eligibility_revised', label: 'Eligibility', bar: 'bg-rose-500', badge: 'bg-rose-500/10 text-rose-400 border-rose-500/25', dot: 'bg-rose-400' },
+  { key: 'corrigendum', label: 'Corrigendum', bar: 'bg-orange-500', badge: 'bg-orange-500/10 text-orange-400 border-orange-500/25', dot: 'bg-orange-400' },
 ] as const;
 
 export const TYPE_MAP = Object.fromEntries(TYPES.map((t) => [t.key, t]));

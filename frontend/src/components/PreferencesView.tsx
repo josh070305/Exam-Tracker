@@ -81,61 +81,61 @@ export const PreferencesView: React.FC<PreferencesViewProps> = ({
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-fade">
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8">
-        <div className="border-b border-slate-100 pb-5">
-          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+      <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 shadow-2xl p-6 sm:p-8 backdrop-blur-md">
+        <div className="border-b border-zinc-800/80 pb-5">
+          <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
             <span>⚙️</span>
-            <span>Aspirant Notification Profile</span>
+            <span>Aspirant Notification Profile & Channel Routing</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Configure customized exam filters and notification dispatch channels.
+          <p className="text-xs text-zinc-400 mt-1">
+            Configure customized exam keyword filters and automated multi-channel alert delivery.
           </p>
         </div>
 
         {/* Channels Credentials */}
         <div className="mt-6 space-y-4">
-          <h3 className="text-xs font-bold uppercase text-slate-500 tracking-wider">
+          <h3 className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-bold">
             Dispatch Channels & Contact Info
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-zinc-300 mb-1">
                 Telegram Chat ID
               </label>
               <input
                 value={telegramChatId}
                 onChange={(e) => setTelegramChatId(e.target.value)}
-                placeholder="e.g. 7171410498 (or /start in bot)"
-                className="w-full text-sm border border-slate-300 rounded-xl px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                placeholder="e.g. 7171410498"
+                className="w-full text-xs sm:text-sm border border-zinc-800 rounded-xl px-3.5 py-2.5 bg-zinc-950 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500 font-mono"
               />
-              <p className="text-[11px] text-slate-400 mt-1">
-                Use your ID from @RawDataBot or send <code className="bg-slate-100 px-1 py-0.5 rounded">/start</code> to the bot.
+              <p className="text-[10px] text-zinc-500 mt-1">
+                From @RawDataBot or send <code className="bg-zinc-800 px-1 py-0.2 rounded text-zinc-300">/start</code> in the Telegram bot.
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                WhatsApp Phone Number
+              <label className="block text-xs font-semibold text-zinc-300 mb-1">
+                WhatsApp Number (E.164)
               </label>
               <input
                 value={whatsappNumber}
                 onChange={(e) => setWhatsappNumber(e.target.value)}
-                placeholder="e.g. +919876543210"
-                className="w-full text-sm border border-slate-300 rounded-xl px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                placeholder="+919876543210"
+                className="w-full text-xs sm:text-sm border border-zinc-800 rounded-xl px-3.5 py-2.5 bg-zinc-950 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500 font-mono"
               />
-              <p className="text-[11px] text-slate-400 mt-1">E.164 format with country code (Twilio)</p>
+              <p className="text-[10px] text-zinc-500 mt-1">Twilio WhatsApp Sandbox format</p>
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-zinc-300 mb-1">
                 Email Address
               </label>
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="aspirant@example.com"
-                className="w-full text-sm border border-slate-300 rounded-xl px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                className="w-full text-xs sm:text-sm border border-zinc-800 rounded-xl px-3.5 py-2.5 bg-zinc-950 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500 font-mono"
               />
             </div>
           </div>
@@ -143,8 +143,8 @@ export const PreferencesView: React.FC<PreferencesViewProps> = ({
 
         {/* Recruitment Boards Filter */}
         <div className="mt-6">
-          <h3 className="text-xs font-bold uppercase text-slate-500 tracking-wider">
-            Recruitment Boards to Monitor
+          <h3 className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-bold">
+            Recruitment Boards to Watch
           </h3>
           <div className="mt-2.5 flex flex-wrap gap-2">
             {SOURCES.map((s) => {
@@ -154,10 +154,10 @@ export const PreferencesView: React.FC<PreferencesViewProps> = ({
                   key={s}
                   type="button"
                   onClick={() => toggleSource(s)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-mono transition ${
                     active
-                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(99,102,241,0.4)]'
+                      : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700'
                   }`}
                 >
                   {s}
@@ -169,24 +169,24 @@ export const PreferencesView: React.FC<PreferencesViewProps> = ({
 
         {/* Specific Exam Keywords */}
         <div className="mt-6">
-          <h3 className="text-xs font-bold uppercase text-slate-500 tracking-wider">
+          <h3 className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-bold">
             Specific Exam Keywords (Substring Filter)
           </h3>
           <input
             value={exams}
             onChange={(e) => setExams(e.target.value)}
-            placeholder="e.g. SSC CGL, RRB NTPC, TNPSC Group 2, UPSC Prelims"
-            className="mt-2 w-full text-sm border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+            placeholder="e.g. SSC CGL, RRB NTPC, UPSC CSE, TNPSC Group 2"
+            className="mt-2 w-full text-xs sm:text-sm border border-zinc-800 rounded-xl px-3.5 py-2.5 bg-zinc-950 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500"
           />
-          <p className="text-[11px] text-slate-400 mt-1">
-            Separate keywords with commas. Leave blank to receive alerts for all exams in selected boards.
+          <p className="text-[10px] text-zinc-500 mt-1">
+            Comma-separated. Leave empty to receive alerts for all exams under selected boards.
           </p>
         </div>
 
         {/* Change Types Filter */}
         <div className="mt-6">
-          <h3 className="text-xs font-bold uppercase text-slate-500 tracking-wider">
-            Change Types to Receive
+          <h3 className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-bold">
+            Alert Categories
           </h3>
           <div className="mt-2.5 flex flex-wrap gap-2">
             {TYPES.map((t) => {
@@ -196,10 +196,10 @@ export const PreferencesView: React.FC<PreferencesViewProps> = ({
                   key={t.key}
                   type="button"
                   onClick={() => toggleType(t.key)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition ${
                     active
-                      ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/30'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-zinc-100 text-zinc-900 font-bold shadow'
+                      : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
                   {t.label}
@@ -211,14 +211,14 @@ export const PreferencesView: React.FC<PreferencesViewProps> = ({
 
         {/* Active Dispatch Channels */}
         <div className="mt-6">
-          <h3 className="text-xs font-bold uppercase text-slate-500 tracking-wider">
-            Active Notification Channels
+          <h3 className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-bold">
+            Active Alert Channels
           </h3>
           <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-3 gap-3">
             {(['telegram', 'whatsapp', 'email'] as const).map((ch) => (
               <label
                 key={ch}
-                className="flex items-center gap-2.5 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50/80 cursor-pointer transition"
+                className="flex items-center gap-2.5 p-3.5 rounded-xl border border-zinc-800 hover:bg-zinc-800/50 cursor-pointer transition bg-zinc-950/60"
               >
                 <input
                   type="checkbox"
@@ -226,20 +226,20 @@ export const PreferencesView: React.FC<PreferencesViewProps> = ({
                   onChange={(e) =>
                     setChannels((prev) => ({ ...prev, [ch]: e.target.checked }))
                   }
-                  className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500"
+                  className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 bg-zinc-900 border-zinc-700"
                 />
-                <span className="text-xs font-bold uppercase text-slate-700">{ch}</span>
+                <span className="text-xs font-bold uppercase text-zinc-300 font-mono">{ch}</span>
               </label>
             ))}
           </div>
         </div>
 
         {/* Save Action */}
-        <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-end">
+        <div className="mt-8 pt-6 border-t border-zinc-800/80 flex items-center justify-end">
           <button
             onClick={save}
             disabled={saving || !user}
-            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/30 active:scale-95 disabled:opacity-50 transition duration-200"
+            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(99,102,241,0.3)] active:scale-95 disabled:opacity-50 transition"
           >
             {saving ? 'Saving...' : 'Save Preferences'}
           </button>

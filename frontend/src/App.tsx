@@ -196,7 +196,10 @@ export default function App() {
   }, [loadAll, loadFeed, loadKB, showToast]);
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-indigo-500/30 selection:text-indigo-200 relative overflow-x-hidden">
+      {/* Subtle Top Ambient Lighting Gradient */}
+      <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.12),rgba(255,255,255,0))]" />
+
       {/* Header */}
       <Header
         tab={tab}
@@ -210,7 +213,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 relative z-10">
         {tab === 'feed' && (
           <FeedView
             changes={changes}
@@ -268,8 +271,8 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white py-5 text-center text-xs text-slate-500">
-        GovExam Tracker • Autonomous Multi-Board Government Recruitment Intelligence & Real-Time Alert System
+      <footer className="border-t border-zinc-800/80 bg-zinc-950 py-5 text-center text-xs text-zinc-500 font-mono relative z-10">
+        GovExam Intelligence • Autonomous Multi-Board Government Recruitment Intelligence System
       </footer>
 
       {/* Floating Toast */}
