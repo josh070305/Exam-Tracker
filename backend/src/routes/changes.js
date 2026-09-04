@@ -79,8 +79,19 @@ router.get('/changes/:source', async (req, res) => {
   }
 });
 
-// POST /api/check-now -> manually trigger the full pipeline immediately
-router.post('/check-now', async (req, res) => {
+const rateLimit = require('express-rate-limit');
+
+const checkNowLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute window
+  max: 10, // max 10 manual scans per minute per IP
+  message: { error: 'Too many scan requests. Please wait a minute before triggering another scan.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test',
+});
+
+// POST /api/check-now -> manually trigger the full pipeline immediately with rate limiting
+router.post('/check-now', checkNowLimiter, async (req, res) => {
   try {
     const results = await runAllSources();
     await persistToDisk();

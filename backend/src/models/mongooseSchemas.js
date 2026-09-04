@@ -25,6 +25,8 @@ const ExamChangeSchema = new mongoose.Schema(
     summary: { type: String, required: true },
     rawSnippet: { type: String, default: null },
     pdfUrl: { type: String, default: null },
+    idempotencyKey: { type: String, index: true, default: null },
+    lastVerifiedAt: { type: Date, default: Date.now },
     detectedAt: { type: Date, default: Date.now, index: -1 },
     contentHash: { type: String, default: null },
   },

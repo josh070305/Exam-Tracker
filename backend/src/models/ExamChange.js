@@ -19,6 +19,8 @@ function createExamChange(data) {
       summary: data.summary || '',
       rawSnippet: data.rawSnippet || null,
       pdfUrl: data.pdfUrl || null,
+      idempotencyKey: data.idempotencyKey || null,
+      lastVerifiedAt: data.lastVerifiedAt || new Date(),
       detectedAt: data.detectedAt || new Date(),
       contentHash: data.contentHash || null,
     },

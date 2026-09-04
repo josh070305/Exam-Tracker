@@ -136,43 +136,52 @@ export default function App() {
     }
   };
 
-  // Real-time Server-Sent Events (SSE) Listener
+  // Real-time Server-Sent Events (SSE) Listener with resilient auto-reconnect
   useEffect(() => {
     loadAll();
 
     let eventSource: EventSource | null = null;
-    try {
-      eventSource = new EventSource(`${API_BASE}/stream`);
+    let reconnectTimer: any = null;
 
-      eventSource.onopen = () => {
-        setSseConnected(true);
-      };
+    const connectSSE = () => {
+      try {
+        eventSource = new EventSource(`${API_BASE}/stream`);
 
-      // Live exam updates
-      eventSource.addEventListener('exam_update', (event) => {
-        try {
-          const newChange: ExamChange = JSON.parse(event.data);
-          setChanges((prev) => [newChange, ...prev.filter((c) => c._id !== newChange._id)]);
-          showToast({ kind: 'info', msg: `Live Update: ${newChange.summary}` });
-          loadFeed();
-          loadKB();
-        } catch {}
-      });
+        eventSource.onopen = () => {
+          setSseConnected(true);
+        };
 
-      // Live agent reasoning and scraping logs
-      eventSource.addEventListener('agent_log', (event) => {
-        try {
-          const logItem: AgentLog = JSON.parse(event.data);
-          setAgentLogs((prev) => [logItem, ...prev.slice(0, 99)]);
-        } catch {}
-      });
+        // Live exam updates
+        eventSource.addEventListener('exam_update', (event) => {
+          try {
+            const newChange: ExamChange = JSON.parse(event.data);
+            setChanges((prev) => [newChange, ...prev.filter((c) => c._id !== newChange._id)]);
+            showToast({ kind: 'info', msg: `Live Update: ${newChange.summary}` });
+            loadFeed();
+            loadKB();
+          } catch {}
+        });
 
-      eventSource.onerror = () => {
+        // Live agent reasoning and scraping logs
+        eventSource.addEventListener('agent_log', (event) => {
+          try {
+            const logItem: AgentLog = JSON.parse(event.data);
+            setAgentLogs((prev) => [logItem, ...prev.slice(0, 99)]);
+          } catch {}
+        });
+
+        eventSource.onerror = () => {
+          setSseConnected(false);
+          eventSource?.close();
+          // Auto-reconnect after 3 seconds if backend was restarting
+          reconnectTimer = setTimeout(connectSSE, 3000);
+        };
+      } catch {
         setSseConnected(false);
-      };
-    } catch {
-      setSseConnected(false);
-    }
+      }
+    };
+
+    connectSSE();
 
     // Fallback polling every 60s
     const pollId = setInterval(() => {
@@ -181,6 +190,7 @@ export default function App() {
 
     return () => {
       eventSource?.close();
+      clearTimeout(reconnectTimer);
       clearInterval(pollId);
     };
   }, [loadAll, loadFeed, loadKB, showToast]);

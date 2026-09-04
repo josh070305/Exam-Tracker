@@ -62,17 +62,27 @@ function buildPrompt({ rawText, source, historicalExams, pdfNotices }) {
 
 async function extractWithAnthropic(prompt) {
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  const start = Date.now();
   const msg = await client.messages.create({
     model: env.ANTHROPIC_MODEL,
     max_tokens: 2500,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: prompt }],
   });
-  return msg.content[0].text;
+  const latencyMs = Date.now() - start;
+  const rawText = msg.content[0].text;
+  return {
+    raw: rawText,
+    latencyMs,
+    promptTokens: msg.usage?.input_tokens || 0,
+    completionTokens: msg.usage?.output_tokens || 0,
+    model: env.ANTHROPIC_MODEL,
+  };
 }
 
 async function extractWithGroq(prompt) {
   const client = new OpenAI({ apiKey: env.GROQ_API_KEY, baseURL: env.GROQ_BASE_URL });
+  const start = Date.now();
   const completion = await client.chat.completions.create({
     model: env.GROQ_MODEL,
     temperature: 0,
@@ -81,7 +91,14 @@ async function extractWithGroq(prompt) {
       { role: 'user', content: prompt },
     ],
   });
-  return completion.choices[0].message.content;
+  const latencyMs = Date.now() - start;
+  return {
+    raw: completion.choices[0].message.content,
+    latencyMs,
+    promptTokens: completion.usage?.prompt_tokens || 0,
+    completionTokens: completion.usage?.completion_tokens || 0,
+    model: env.GROQ_MODEL,
+  };
 }
 
 /**
@@ -97,14 +114,14 @@ async function extractChanges(rawText, context = {}) {
     pdfNotices: context.pdfNotices,
   });
 
-  let raw;
+  let responseData;
   try {
     if (env.AI_PROVIDER === 'anthropic') {
       if (!env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY not set');
-      raw = await extractWithAnthropic(prompt);
+      responseData = await extractWithAnthropic(prompt);
     } else {
       if (!env.GROQ_API_KEY) throw new Error('GROQ_API_KEY not set');
-      raw = await extractWithGroq(prompt);
+      responseData = await extractWithGroq(prompt);
     }
   } catch (err) {
     if (err && err.status === 429) {
@@ -116,10 +133,17 @@ async function extractChanges(rawText, context = {}) {
   }
 
   try {
-    const parsed = JSON.parse(cleanJson(raw));
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed = JSON.parse(cleanJson(responseData.raw));
+    const items = Array.isArray(parsed) ? parsed : [];
+    items.metrics = {
+      latencyMs: responseData.latencyMs,
+      promptTokens: responseData.promptTokens,
+      completionTokens: responseData.completionTokens,
+      model: responseData.model,
+    };
+    return items;
   } catch (err) {
-    console.error('[AI] Failed to parse JSON response from LLM. Raw:', raw);
+    console.error('[AI] Failed to parse JSON response from LLM. Raw:', responseData?.raw);
     return null;
   }
 }

@@ -9,21 +9,36 @@ const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
   '(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 
-async function fetchPage(url) {
-  try {
-    const { data } = await axios.get(url, {
-      headers: {
-        'User-Agent': USER_AGENT,
-        'Accept-Language': 'en-US,en;q=0.9',
-        Accept: 'text/html,application/xhtml+xml',
-      },
-      timeout: 45000,
-      maxRedirects: 5,
-    });
-    return data;
-  } catch (err) {
-    const code = err.code || (err.response ? `HTTP ${err.response.status}` : 'unknown');
-    throw new Error(`fetch failed [${code}] for ${url}: ${err.message}`);
+const https = require('https');
+
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false, // Handle government portal self-signed / expired certs
+  keepAlive: true,
+});
+
+async function fetchPage(url, retries = 2) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const { data } = await axios.get(url, {
+        httpsAgent,
+        headers: {
+          'User-Agent': USER_AGENT,
+          'Accept-Language': 'en-US,en;q=0.9',
+          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Cache-Control': 'no-cache',
+        },
+        timeout: 35000,
+        maxRedirects: 5,
+      });
+      return data;
+    } catch (err) {
+      if (attempt === retries) {
+        const code = err.code || (err.response ? `HTTP ${err.response.status}` : 'unknown');
+        throw new Error(`fetch failed [${code}] for ${url}: ${err.message}`);
+      }
+      // Exponential backoff
+      await new Promise((r) => setTimeout(r, attempt * 1000));
+    }
   }
 }
 

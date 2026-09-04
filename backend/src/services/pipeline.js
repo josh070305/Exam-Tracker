@@ -130,10 +130,42 @@ async function processSource(source) {
       return { source: source.name, changed: true, newChanges: 0, skipped: true };
     }
 
+    if (items.metrics) {
+      broadcast('agent_log', {
+        timestamp: new Date().toISOString(),
+        stage: 'AI_TELEMETRY',
+        source: source.name,
+        message: `${items.metrics.model} inference completed in ${items.metrics.latencyMs}ms (Tokens: ${items.metrics.promptTokens} prompt + ${items.metrics.completionTokens} completion).`,
+      });
+    }
+
     let newCount = 0;
     let notified = 0;
     for (const item of items) {
       const type = VALID_TYPES.includes(item.changeType) ? item.changeType : 'new_exam';
+
+      // 4. Semantic Idempotency Deduplication: Prevent duplicate alerts for unchanged news
+      const normKey = [
+        (source.name || '').toLowerCase().trim(),
+        (item.examName || '').toLowerCase().trim(),
+        (type || '').toLowerCase().trim(),
+        (item.changedField || '').toLowerCase().trim(),
+        (item.newValue || '').toLowerCase().trim(),
+      ].join('::');
+      const idempotencyKey = require('crypto').createHash('sha256').update(normKey).digest('hex');
+
+      const existing = await ExamChange.findOne({ idempotencyKey });
+      if (existing) {
+        broadcast('agent_log', {
+          timestamp: new Date().toISOString(),
+          stage: 'DEDUP_SUPPRESSED',
+          source: source.name,
+          message: `Notice for "${item.examName || source.name}" (${type}) verified identical to prior state. Suppressing duplicate alert.`,
+        });
+        await ExamChange.updateOne({ _id: existing._id }, { $set: { lastVerifiedAt: new Date() } });
+        continue;
+      }
+
       const change = await ExamChange.create({
         source: source.name,
         examName: item.examName || null,
@@ -145,6 +177,7 @@ async function processSource(source) {
         summary: item.summary || '',
         rawSnippet: scraped.text.slice(0, 2000),
         pdfUrl: item.pdfUrl || (pdfNotices[0] ? pdfNotices[0].url : null),
+        idempotencyKey,
         contentHash: scraped.hash,
       });
 
