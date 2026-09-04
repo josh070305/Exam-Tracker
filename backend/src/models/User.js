@@ -1,7 +1,9 @@
 const { getModel } = require('../store');
+const { isMongooseConnected } = require('../config/db');
+const { MongooseUser } = require('./mongooseSchemas');
 const crypto = require('crypto');
 
-const MODEL = getModel('User');
+const MEMORY_MODEL = getModel('User');
 
 function createUser(data) {
   const doc = Object.assign(
@@ -12,9 +14,16 @@ function createUser(data) {
       whatsappNumber: data.whatsappNumber || null,
       email: data.email || null,
       prefs: data.prefs || {
-        sources: [],
+        sources: ['SSC', 'RRB', 'TNPSC', 'UPSC', 'IBPS', 'SBI'],
         exams: [],
-        types: [],
+        types: [
+          'new_exam',
+          'date_change',
+          'admit_card',
+          'result',
+          'eligibility_revised',
+          'corrigendum',
+        ],
         channels: { telegram: true, whatsapp: false, email: false },
       },
       createdAt: data.createdAt || new Date(),
@@ -27,37 +36,68 @@ function createUser(data) {
 }
 
 const User = {
-  async find(query) {
-    return MODEL.find(query);
+  async find(query = {}) {
+    if (isMongooseConnected()) {
+      return MongooseUser.find(query).lean();
+    }
+    return MEMORY_MODEL.find(query);
   },
   async findOne(query) {
-    return MODEL.findOne(query);
+    if (isMongooseConnected()) {
+      return MongooseUser.findOne(query).lean();
+    }
+    return MEMORY_MODEL.findOne(query);
   },
   async findById(id) {
-    return MODEL.findById(id);
+    if (isMongooseConnected()) {
+      return MongooseUser.findById(id).lean();
+    }
+    return MEMORY_MODEL.findById(id);
   },
-  async countDocuments(query) {
-    return MODEL.countDocuments(query);
+  async countDocuments(query = {}) {
+    if (isMongooseConnected()) {
+      return MongooseUser.countDocuments(query);
+    }
+    return MEMORY_MODEL.countDocuments(query);
   },
   async create(data) {
+    if (isMongooseConnected()) {
+      const created = await MongooseUser.create(data);
+      return created.toObject();
+    }
     const doc = createUser(data);
-    return MODEL.create(doc);
+    return MEMORY_MODEL.create(doc);
   },
   async insertMany(docs, opts) {
+    if (isMongooseConnected()) {
+      return MongooseUser.insertMany(docs, opts);
+    }
     const prepared = docs.map((d) => createUser(d));
-    return MODEL.insertMany(prepared, opts);
+    return MEMORY_MODEL.insertMany(prepared, opts);
   },
   async findOneAndUpdate(query, update, opts) {
-    return MODEL.findOneAndUpdate(query, update, opts);
+    if (isMongooseConnected()) {
+      return MongooseUser.findOneAndUpdate(query, update, { new: true, ...opts }).lean();
+    }
+    return MEMORY_MODEL.findOneAndUpdate(query, update, opts);
   },
   async findByIdAndUpdate(id, update, opts) {
-    return MODEL.findByIdAndUpdate(id, update, opts);
+    if (isMongooseConnected()) {
+      return MongooseUser.findByIdAndUpdate(id, update, { new: true, ...opts }).lean();
+    }
+    return MEMORY_MODEL.findByIdAndUpdate(id, update, opts);
   },
   async updateOne(query, update, opts) {
-    return MODEL.updateOne(query, update, opts);
+    if (isMongooseConnected()) {
+      return MongooseUser.updateOne(query, update, opts);
+    }
+    return MEMORY_MODEL.updateOne(query, update, opts);
   },
   async aggregate(pipeline) {
-    return MODEL.aggregate(pipeline);
+    if (isMongooseConnected()) {
+      return MongooseUser.aggregate(pipeline);
+    }
+    return MEMORY_MODEL.aggregate(pipeline);
   },
 };
 

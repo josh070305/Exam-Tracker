@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/main.tsx"],"version":"5.9.3"}
+{"root":["./src/app.tsx","./src/main.tsx","./src/types.ts","./src/components/agentconsole.tsx","./src/components/changecard.tsx","./src/components/detaildrawer.tsx","./src/components/feedview.tsx","./src/components/header.tsx","./src/components/knowledgebaseview.tsx","./src/components/preferencesview.tsx","./src/components/sourcestatus.tsx","./src/components/statcard.tsx","./src/components/telegramsimulator.tsx","./src/components/typechart.tsx"],"version":"5.9.3"}

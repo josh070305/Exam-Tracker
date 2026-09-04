@@ -7,8 +7,7 @@ const { persistToDisk } = require('../storage');
 
 const PAGE_LIMIT = 20;
 
-// GET /api/stats — aggregate counts for the dashboard
-router.get('/stats', async (req, res) => {
+async function handleStats(req, res) {
   try {
     const [total, byTypeAgg, bySourceAgg, snaps] = await Promise.all([
       ExamChange.countDocuments(),
@@ -17,20 +16,19 @@ router.get('/stats', async (req, res) => {
       SourceSnapshot.find(),
     ]);
     const byType = {};
-    byTypeAgg.forEach((d) => (byType[d._id] = d.count));
+    (byTypeAgg || []).forEach((d) => (byType[d._id] = d.count));
     const bySource = {};
-    bySourceAgg.forEach((d) => (bySource[d._id] = d.count));
+    (bySourceAgg || []).forEach((d) => (bySource[d._id] = d.count));
     const lastChecked = {};
-    snaps.forEach((s) => (lastChecked[s.source] = s.lastCheckedAt));
+    (snaps || []).forEach((s) => (lastChecked[s.source] = s.lastCheckedAt));
     res.json({ total, byType, bySource, lastChecked });
   } catch (err) {
     console.error('[API] GET /stats failed:', err.message);
     res.status(500).json({ error: 'Failed to fetch stats' });
   }
-});
+}
 
-// GET /api/sources — source snapshot status (last checked, dedup hash)
-router.get('/sources', async (req, res) => {
+async function handleSources(req, res) {
   try {
     const snaps = await SourceSnapshot.find();
     res.json({ sources: snaps });
@@ -38,7 +36,15 @@ router.get('/sources', async (req, res) => {
     console.error('[API] GET /sources failed:', err.message);
     res.status(500).json({ error: 'Failed to fetch sources' });
   }
-});
+}
+
+// Support both /stats and /changes/stats for backwards and docs compatibility
+router.get('/stats', handleStats);
+router.get('/changes/stats', handleStats);
+
+// Support both /sources and /changes/sources
+router.get('/sources', handleSources);
+router.get('/changes/sources', handleSources);
 
 // GET /api/changes?page=1  -> all changes, newest first, paginated
 router.get('/changes', async (req, res) => {

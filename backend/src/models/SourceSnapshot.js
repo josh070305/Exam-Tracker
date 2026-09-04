@@ -1,7 +1,9 @@
 const { getModel } = require('../store');
+const { isMongooseConnected } = require('../config/db');
+const { MongooseSourceSnapshot } = require('./mongooseSchemas');
 const crypto = require('crypto');
 
-const MODEL = getModel('SourceSnapshot');
+const MEMORY_MODEL = getModel('SourceSnapshot');
 
 function createSourceSnapshot(data) {
   const doc = Object.assign(
@@ -18,39 +20,62 @@ function createSourceSnapshot(data) {
 }
 
 const SourceSnapshot = {
-  async find(query) {
-    return MODEL.find(query);
+  async find(query = {}) {
+    if (isMongooseConnected()) {
+      return MongooseSourceSnapshot.find(query).lean();
+    }
+    return MEMORY_MODEL.find(query);
   },
   async findOne(query) {
-    return MODEL.findOne(query);
+    if (isMongooseConnected()) {
+      return MongooseSourceSnapshot.findOne(query).lean();
+    }
+    return MEMORY_MODEL.findOne(query);
   },
   async findById(id) {
-    return MODEL.findById(id);
+    if (isMongooseConnected()) {
+      return MongooseSourceSnapshot.findById(id).lean();
+    }
+    return MEMORY_MODEL.findById(id);
   },
-  async countDocuments(query) {
-    return MODEL.countDocuments(query);
+  async countDocuments(query = {}) {
+    if (isMongooseConnected()) {
+      return MongooseSourceSnapshot.countDocuments(query);
+    }
+    return MEMORY_MODEL.countDocuments(query);
   },
   async create(data) {
+    if (isMongooseConnected()) {
+      const created = await MongooseSourceSnapshot.create(data);
+      return created.toObject();
+    }
     const doc = createSourceSnapshot(data);
-    return MODEL.create(doc);
+    return MEMORY_MODEL.create(doc);
   },
   async insertMany(docs, opts) {
+    if (isMongooseConnected()) {
+      return MongooseSourceSnapshot.insertMany(docs, opts);
+    }
     const prepared = docs.map((d) => createSourceSnapshot(d));
-    return MODEL.insertMany(prepared, opts);
+    return MEMORY_MODEL.insertMany(prepared, opts);
   },
   async findOneAndUpdate(query, update, opts) {
-    return MODEL.findOneAndUpdate(query, update, opts);
+    if (isMongooseConnected()) {
+      return MongooseSourceSnapshot.findOneAndUpdate(query, update, { new: true, ...opts }).lean();
+    }
+    return MEMORY_MODEL.findOneAndUpdate(query, update, opts);
   },
   async findByIdAndUpdate(id, update, opts) {
-    return MODEL.findByIdAndUpdate(id, update, opts);
+    if (isMongooseConnected()) {
+      return MongooseSourceSnapshot.findByIdAndUpdate(id, update, { new: true, ...opts }).lean();
+    }
+    return MEMORY_MODEL.findByIdAndUpdate(id, update, opts);
   },
   async updateOne(query, update, opts) {
-    return MODEL.updateOne(query, update, opts);
-  },
-  async save(doc) {
-    if (!doc._id) doc._id = crypto.randomUUID();
-    MODEL.docs.set(doc._id, doc);
-    return doc;
+    if (isMongooseConnected()) {
+      return MongooseSourceSnapshot.updateOne(query, update, opts);
+    }
+    return MEMORY_MODEL.updateOne(query, update, opts);
   },
 };
 

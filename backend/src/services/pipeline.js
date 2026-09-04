@@ -1,8 +1,11 @@
 const ExamChange = require('../models/ExamChange');
 const Exam = require('../models/Exam');
+const SourceSnapshot = require('../models/SourceSnapshot');
 const { hasChanged, updateSnapshot } = require('./changeDetection');
 const { extractChanges } = require('./aiExtraction');
+const { extractPdfText } = require('./pdfService');
 const { alertChange } = require('./alerting');
+const { broadcast } = require('./sse');
 const { env } = require('../config/env');
 
 const VALID_TYPES = [
@@ -38,28 +41,91 @@ async function recordExam(change) {
   );
 }
 
-// Process a single source through the full pipeline:
-// scrape -> hash-compare -> extract -> classify -> store -> KB -> alert
+// Process a single source through the agentic pipeline:
+// Scrape -> Hash Check -> PDF Notice Ingestion -> Context Retrieval -> AI Extraction -> Storage -> KB -> SSE & Alerts
 async function processSource(source) {
   console.log(`[Pipeline] Checking source: ${source.name}`);
+  broadcast('agent_log', {
+    timestamp: new Date().toISOString(),
+    stage: 'SCRAPE',
+    source: source.name,
+    message: `Connecting to ${source.name} portal and inspecting announcements section...`,
+  });
+
   try {
     const scraped = await source.scrape();
     const { changed, snapshot } = await hasChanged(source.name, scraped.hash);
 
     if (!changed) {
       console.log(`[Pipeline] No change for ${source.name}. Updating lastCheckedAt only.`);
-      await SourceSnapshot.updateOne(
-        { _id: snapshot._id },
-        { $set: { lastCheckedAt: new Date() } }
-      );
+      broadcast('agent_log', {
+        timestamp: new Date().toISOString(),
+        stage: 'HASH_CHECK',
+        source: source.name,
+        message: `Content hash verified (${scraped.hash.slice(0, 10)}...). Zero new notices detected.`,
+      });
+
+      if (snapshot && snapshot._id) {
+        await SourceSnapshot.updateOne(
+          { _id: snapshot._id },
+          { $set: { lastCheckedAt: new Date() } }
+        );
+      }
       return { source: source.name, changed: false, newChanges: 0 };
     }
 
-    console.log(`[Pipeline] Change detected for ${source.name}. Extracting via AI...`);
-    const items = await extractChanges(scraped.text);
+    console.log(`[Pipeline] Change detected for ${source.name}. Preparing contextual intelligence...`);
+    broadcast('agent_log', {
+      timestamp: new Date().toISOString(),
+      stage: 'DIFF_DETECTED',
+      source: source.name,
+      message: `Content delta identified on ${source.name}! Initiating context & PDF analysis...`,
+    });
+
+    // 1. Context Management: Fetch prior known exams for this recruitment board
+    const historicalExams = await Exam.find({ source: source.name });
+
+    // 2. Attached Notice PDF Ingestion: If any notice PDFs are linked, extract their text
+    const pdfNotices = [];
+    if (scraped.pdfLinks && scraped.pdfLinks.length > 0 && !env.MOCK_SCRAPE) {
+      const topPdfs = scraped.pdfLinks.slice(0, 2); // Process top 2 PDFs to stay fast & efficient
+      for (const link of topPdfs) {
+        if (link.url) {
+          console.log(`[Pipeline] Extracting attached PDF: ${link.title || link.url}`);
+          const pdfResult = await extractPdfText(link.url, 2);
+          if (pdfResult.success && pdfResult.text) {
+            broadcast('agent_log', {
+              timestamp: new Date().toISOString(),
+              stage: 'PDF_INGEST',
+              source: source.name,
+              message: `Extracted text from official notice PDF (${link.title || 'Notice'}).`,
+            });
+            pdfNotices.push({
+              title: link.title,
+              url: link.url,
+              text: pdfResult.text,
+            });
+          }
+        }
+      }
+    }
+
+    broadcast('agent_log', {
+      timestamp: new Date().toISOString(),
+      stage: 'LLM_REASONING',
+      source: source.name,
+      message: `Analyzing diffs against historical records using ${env.AI_PROVIDER.toUpperCase()} agent...`,
+    });
+
+    // 3. Agentic AI Extraction with context and PDF text
+    const items = await extractChanges(scraped.text, {
+      source: source.name,
+      historicalExams,
+      pdfNotices,
+    });
 
     if (items === null) {
-      console.warn(`[Pipeline] AI extraction skipped for ${source.name}. Not storing.`);
+      console.warn(`[Pipeline] AI extraction skipped or rate-limited for ${source.name}.`);
       await updateSnapshot(source.name, scraped.hash);
       return { source: source.name, changed: true, newChanges: 0, skipped: true };
     }
@@ -73,20 +139,35 @@ async function processSource(source) {
         examName: item.examName || null,
         changeType: type,
         changedField: item.changedField || null,
-        oldValue: item.oldValue ?? null,
-        newValue: item.newValue ?? null,
+        oldValue: item.oldValue != null ? String(item.oldValue) : null,
+        newValue: item.newValue != null ? String(item.newValue) : null,
         effectiveDate: item.effectiveDate ? new Date(item.effectiveDate) : null,
         summary: item.summary || '',
         rawSnippet: scraped.text.slice(0, 2000),
+        pdfUrl: item.pdfUrl || (pdfNotices[0] ? pdfNotices[0].url : null),
         contentHash: scraped.hash,
       });
+
       await recordExam(change);
+
+      // Real-time broadcast to connected web dashboards
+      broadcast('exam_update', change);
+
+      // Multi-channel alerting (Telegram, WhatsApp, Email)
       const r = await alertChange(change, env.TELEGRAM_CHAT_ID);
       notified += r.notified || 0;
       newCount++;
     }
 
     await updateSnapshot(source.name, scraped.hash);
+    broadcast('source_updated', { source: source.name, newCount, timestamp: new Date().toISOString() });
+    broadcast('agent_log', {
+      timestamp: new Date().toISOString(),
+      stage: 'COMPLETED',
+      source: source.name,
+      message: `Discovered ${newCount} validated exam change(s). Dispatched alerts to ${notified} channels.`,
+    });
+
     console.log(`[Pipeline] Stored ${newCount} change(s) for ${source.name} (alerts sent: ${notified}).`);
     return { source: source.name, changed: true, newChanges: newCount, notified };
   } catch (err) {
@@ -106,4 +187,4 @@ async function runAllSources() {
   return results;
 }
 
-module.exports = { processSource, runAllSources };
+module.exports = { processSource, runAllSources, recordExam };

@@ -45,8 +45,27 @@ function hashContent(text) {
 
 // Extract ONLY the notifications/announcements section of a page, not the
 // whole document (nav bars / footers change constantly and cause false positives).
-function extractSection(html, selectors) {
+function extractSection(html, selectors, baseUrl = '') {
   const $ = cheerio.load(html);
+  
+  const extractPdfLinks = (container) => {
+    const links = [];
+    container.find('a[href]').each((_, el) => {
+      const href = $(el).attr('href') || '';
+      const linkText = $(el).text().replace(/\s+/g, ' ').trim();
+      if (href.toLowerCase().includes('.pdf') || href.toLowerCase().includes('download')) {
+        let fullUrl = href;
+        if (baseUrl && !href.startsWith('http://') && !href.startsWith('https://')) {
+          try {
+            fullUrl = new URL(href, baseUrl).toString();
+          } catch {}
+        }
+        links.push({ title: linkText, url: fullUrl });
+      }
+    });
+    return links;
+  };
+
   // Strip noise that changes but carries no exam info.
   $('script, style, nav, footer, header, img, svg, link, noscript').remove();
 
@@ -55,14 +74,17 @@ function extractSection(html, selectors) {
     if (el.length) {
       const text = el.first().text().replace(/\s+/g, ' ').trim();
       if (text.length > 50) {
-        return { html: el.first().html(), text };
+        const pdfLinks = extractPdfLinks(el.first());
+        return { html: el.first().html(), text, pdfLinks };
       }
     }
   }
 
   // Fallback: entire body with noise stripped.
   const bodyText = $('body').text().replace(/\s+/g, ' ').trim();
-  return { html: $('body').html(), text: bodyText };
+  const pdfLinks = extractPdfLinks($('body'));
+  return { html: $('body').html(), text: bodyText, pdfLinks };
 }
 
 module.exports = { fetchPage, getPageHtml, hashContent, extractSection };
+
