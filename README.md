@@ -15,32 +15,32 @@ An autonomous agentic system that continuously monitors official Indian governme
 
 ```mermaid
 flowchart TD
-    Scheduler[Cron Scheduler / Manual Trigger / Webhook] --> Pipeline[Agent Orchestrator]
-    
-    subgraph Scraping & Ingestion
-        Pipeline --> Scraper[Cheerio Notice Board Scrapers]
-        Scraper --> Hash[SHA-256 Content Hash Comparison]
-        Hash -- No Change Detected --> Skip[Update lastCheckedAt & Terminate Cycle]
-        Hash -- Content Changed --> PDF[PDF Notice Link Extractor]
-        PDF --> PDFParser[pdf-parse Engine: Extract Text & Corrigendums]
+    Scheduler["Cron Scheduler / Manual Trigger / Webhook"] --> Pipeline["Agent Orchestrator"]
+
+    subgraph ScrapingAndIngestion["Scraping & Ingestion"]
+        Pipeline --> Scraper["Cheerio Notice Board Scrapers"]
+        Scraper --> Hash["SHA-256 Content Hash Comparison"]
+        Hash -- "No Change Detected" --> Skip["Update lastCheckedAt & Terminate Cycle"]
+        Hash -- "Content Changed" --> PDF["PDF Notice Link Extractor"]
+        PDF --> PDFParser["pdf-parse Engine: Extract Text & Corrigendums"]
     end
-    
-    subgraph Agentic Intelligence & Context Management
-        PDFParser --> ContextQuery[Fetch Historical Exam Records from MongoDB]
-        ContextQuery --> AIAgent[LLM Extraction Agent (Claude / Groq Llama 3.3)]
-        AIAgent --> SchemaValidation[JSON Schema Validation & Type Classification]
+
+    subgraph AgenticContext["Agentic Intelligence & Context Management"]
+        PDFParser --> ContextQuery["Fetch Historical Exam Records from MongoDB"]
+        ContextQuery --> AIAgent["LLM Extraction Agent"]
+        AIAgent --> SchemaValidation["JSON Schema Validation & Type Classification"]
     end
-    
-    subgraph Storage & Versioning
-        SchemaValidation --> MongoChanges[(ExamChange Collection)]
-        SchemaValidation --> MongoKB[(Versioned Exam Knowledge Base)]
+
+    subgraph StorageAndVersioning["Storage & Versioning"]
+        SchemaValidation --> MongoChanges[("ExamChange Collection")]
+        SchemaValidation --> MongoKB[("Versioned Exam Knowledge Base")]
     end
-    
-    subgraph Real-Time Distribution
-        MongoChanges --> SSE[Server-Sent Events: /api/stream]
-        SSE --> ReactUI[React + TS Live Dashboard]
-        MongoChanges --> TelegramBot[Interactive Telegram Bot: Long Polling]
-        MongoChanges --> MultiChannel[Twilio WhatsApp & SMTP Email]
+
+    subgraph RealTimeDistribution["Real-Time Distribution"]
+        MongoChanges --> SSE["Server-Sent Events: /api/stream"]
+        SSE --> ReactUI["React + TS Live Dashboard"]
+        MongoChanges --> TelegramBot["Interactive Telegram Bot: Long Polling"]
+        MongoChanges --> MultiChannel["Twilio WhatsApp & SMTP Email"]
     end
 ```
 
