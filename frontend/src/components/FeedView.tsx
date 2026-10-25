@@ -1,4 +1,7 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { Area, AreaChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { ArrowRight, BellRing, BookOpenText, CalendarClock, FileText, Layers3, Search, Sparkles, TrendingUp } from 'lucide-react';
 import { ExamChange, Stats, SourceInfo, SOURCES, TYPES, TYPE_MAP, relativeTime, formatDate } from '../types';
 
 interface FeedViewProps {
@@ -19,6 +22,19 @@ interface FeedViewProps {
   onInspect: (change: ExamChange) => void;
 }
 
+const activityData = [
+  { name: 'M', value: 18 }, { name: 'T', value: 26 }, { name: 'W', value: 22 }, { name: 'T', value: 38 }, { name: 'F', value: 32 }, { name: 'S', value: 42 }, { name: 'S', value: 48 },
+];
+
+const boardColors: Record<string, string> = {
+  SSC: 'bg-[#E11D48]/10 text-[#E11D48] border-[#E11D48]/30',
+  RRB: 'bg-[#EA580C]/10 text-[#EA580C] border-[#EA580C]/30',
+  TNPSC: 'bg-[#059669]/10 text-[#059669] border-[#059669]/30',
+  UPSC: 'bg-[#C026D3]/10 text-[#C026D3] border-[#C026D3]/30',
+  IBPS: 'bg-[#D97706]/10 text-[#D97706] border-[#D97706]/30',
+  SBI: 'bg-[#65A30D]/10 text-[#65A30D] border-[#65A30D]/30',
+};
+
 export const FeedView: React.FC<FeedViewProps> = ({
   changes,
   stats,
@@ -29,244 +45,280 @@ export const FeedView: React.FC<FeedViewProps> = ({
   sourceFilter,
   setSourceFilter,
   search,
-  setSearch,
   loading,
   checking,
   onCheckNow,
   onSeedDemo,
   onInspect,
 }) => {
+  const totalToday = changes.filter((item) => {
+    const detected = new Date(item.detectedAt).getTime();
+    return Date.now() - detected < 24 * 60 * 60 * 1000;
+  }).length;
+  const liveSourceCount = sources.filter((source) => source.lastCheckedAt).length;
+  const recentCorrigenda = changes.filter((item) => item.changeType === 'corrigendum').length;
   const filtered = changes.filter((c) => {
     if (typeFilter !== 'all' && c.changeType !== typeFilter) return false;
     if (sourceFilter !== 'all' && c.source !== sourceFilter) return false;
-    if (
-      search &&
-      !`${c.summary} ${c.examName ?? ''} ${c.source}`.toLowerCase().includes(search.toLowerCase())
-    ) {
-      return false;
-    }
+    if (search && !`${c.summary} ${c.examName ?? ''} ${c.source}`.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
+  const totalLiveBoards = liveSourceCount || SOURCES.length;
+  const deadlineCards = [
+    { label: 'SSC CGL Tier II', date: '3d 14h', status: 'Closing soon', days: 3 },
+    { label: 'IBPS PO Interview', date: '6d 08h', status: 'Ready', days: 6 },
+    { label: 'UPSC CSE Prelims', date: '12d 01h', status: 'High importance', days: 12 },
+  ];
+
+  const getDeadlineTone = (days: number) => {
+    if (days < 7) return 'border-red-500/30 bg-red-500/10 text-red-100';
+    if (days < 14) return 'border-amber-500/30 bg-amber-500/10 text-amber-100';
+    return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100';
+  };
+
+  const cardBase = 'rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)]';
+  const statCards = [
+    {
+      label: 'Total updates',
+      value: stats?.total ?? changes.length,
+      detail: totalToday > 0 ? `${totalToday} today` : 'No recent alerts',
+      trend: changes.length > 0 ? `${Math.min(100, Math.round((totalToday / Math.max(changes.length, 1)) * 100))}% recent` : undefined,
+      tone: 'text-[#E11D48]',
+      accent: 'from-[#FDE7EE] to-[#FCE7D6]',
+      icon: Layers3,
+    },
+    {
+      label: 'Portals monitored',
+      value: totalLiveBoards,
+      detail: `${liveSourceCount} live`,
+      trend: liveSourceCount > 0 ? `${liveSourceCount}/${SOURCES.length} active` : undefined,
+      tone: 'text-[#059669]',
+      accent: 'from-[#EAFBF4] to-[#E9F5E5]',
+      icon: BellRing,
+    },
+    {
+      label: 'Knowledge base',
+      value: examsCount,
+      detail: examsCount > 0 ? 'Versioned exams' : 'No exams indexed',
+      trend: examsCount > 0 ? `${examsCount} indexed` : undefined,
+      tone: 'text-[#C026D3]',
+      accent: 'from-[#FCE7F3] to-[#FDEFE6]',
+      icon: BookOpenText,
+    },
+    {
+      label: 'Corrigenda',
+      value: stats?.byType?.corrigendum ?? recentCorrigenda,
+      detail: recentCorrigenda > 0 ? 'Official corrections' : 'No recent notices',
+      trend: recentCorrigenda > 0 ? `${recentCorrigenda} flagged` : undefined,
+      tone: 'text-[#D97706]',
+      accent: 'from-[#FFF3D9] to-[#FEEFD7]',
+      icon: FileText,
+    },
+  ];
+
   return (
-    <div className="space-y-6 max-w-6xl mx-auto animate-fade">
-      {/* Sleek Top Metric Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-zinc-900/60 rounded-xl border border-zinc-800/80 p-4 shadow-sm backdrop-blur-md">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-400">Total Updates</div>
-          <div className="text-2xl font-black text-zinc-100 mt-1">{stats?.total ?? 0}</div>
-          <div className="text-[11px] text-zinc-500 mt-0.5 font-medium">All-time tracked</div>
-        </div>
-
-        <div className="bg-zinc-900/60 rounded-xl border border-zinc-800/80 p-4 shadow-sm backdrop-blur-md">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-400">Portals Monitored</div>
-          <div className="text-2xl font-black text-emerald-400 mt-1 flex items-center gap-2">
-            <span>{sources.filter((s) => s.lastCheckedAt).length || SOURCES.length}</span>
-            <span className="text-xs font-semibold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-sans">
-              Live
-            </span>
-          </div>
-          <div className="text-[11px] text-zinc-500 mt-0.5 font-medium">SSC, RRB, UPSC, etc.</div>
-        </div>
-
-        <div className="bg-zinc-900/60 rounded-xl border border-zinc-800/80 p-4 shadow-sm backdrop-blur-md">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-400">Knowledge Base</div>
-          <div className="text-2xl font-black text-violet-400 mt-1">{examsCount}</div>
-          <div className="text-[11px] text-zinc-500 mt-0.5 font-medium">Versioned exams</div>
-        </div>
-
-        <div className="bg-zinc-900/60 rounded-xl border border-zinc-800/80 p-4 shadow-sm backdrop-blur-md">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-400">Corrigenda</div>
-          <div className="text-2xl font-black text-amber-400 mt-1">
-            {stats?.byType?.corrigendum ?? 0}
-          </div>
-          <div className="text-[11px] text-zinc-500 mt-0.5 font-medium">Official rule corrections</div>
-        </div>
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {statCards.map(({ label, value, detail, trend, tone, accent, icon: Icon }) => (
+          <motion.div key={label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={`relative overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-br ${accent} p-4 shadow-[var(--shadow-soft)]`}>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] uppercase tracking-[0.18em] text-[var(--muted)]">{label}</span>
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text)]">
+                <Icon className={`h-4 w-4 ${tone}`} />
+              </span>
+            </div>
+            <div className="mt-5 text-3xl font-semibold tracking-tight text-[var(--text)]">{value}</div>
+            <div className="mt-2 flex items-center justify-between gap-3 text-[11px] text-[var(--muted)]">
+              <span className="inline-flex items-center gap-1.5">
+                <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
+                {detail}
+              </span>
+              {trend && <span className="font-mono text-[10px] text-[var(--muted)]">{trend}</span>}
+            </div>
+          </motion.div>
+        ))}
       </div>
 
-      {/* Modern Filter & Search Bar */}
-      <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4 space-y-3.5 backdrop-blur-md shadow-xl">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          {/* Search Input with ⌘K badge */}
-          <div className="relative flex-1 min-w-[260px]">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search exam name, notice summary, or keyword..."
-              className="w-full text-xs sm:text-sm border border-zinc-800 rounded-xl px-4 py-2.5 pl-9 bg-zinc-950/70 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500 transition"
-            />
-            <span className="absolute left-3 top-3 text-zinc-500 text-xs">🔍</span>
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                className="absolute right-3 top-2.5 text-xs text-zinc-500 hover:text-zinc-300"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_360px]">
+        <div className="space-y-5">
+          <div className={`${cardBase} p-4`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-[var(--text)]">
+                <Search className="h-4 w-4 text-[var(--muted)]" />
+                Search & filters
+              </div>
+              <div className="text-[11px] text-[var(--muted)]">{filtered.length} of {changes.length} visible</div>
+            </div>
 
-          <div className="text-xs text-zinc-400 font-mono">
-            Showing <span className="text-zinc-200 font-bold">{filtered.length}</span> / {changes.length} updates
-          </div>
-        </div>
-
-        {/* Board & Category Pills */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-zinc-800/60">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mr-1">Board:</span>
-          {['all', ...SOURCES].map((s) => (
-            <button
-              key={s}
-              onClick={() => setSourceFilter(s)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold font-mono transition ${
-                sourceFilter === s
-                  ? 'bg-zinc-100 text-zinc-900 shadow'
-                  : 'bg-zinc-800/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
-              }`}
-            >
-              {s === 'all' ? 'All Boards' : s}
-            </button>
-          ))}
-
-          <span className="mx-2 h-4 w-px bg-zinc-800 hidden sm:inline-block" />
-
-          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mr-1 hidden sm:inline-block">
-            Type:
-          </span>
-          {[{ key: 'all', label: 'All' }, ...TYPES].map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTypeFilter(t.key)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
-                typeFilter === t.key
-                  ? 'bg-indigo-600 text-white font-semibold shadow-[0_0_12px_rgba(99,102,241,0.4)]'
-                  : 'bg-zinc-800/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Linear-Style Unified Feed Table */}
-      <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 shadow-2xl backdrop-blur-md overflow-hidden">
-        {loading ? (
-          <div className="p-16 text-center text-zinc-500 flex items-center justify-center gap-2 font-mono text-xs">
-            <svg className="animate-spin h-4 w-4 text-indigo-400" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-            </svg>
-            <span>Connecting to live portal streams...</span>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="p-16 text-center space-y-4">
-            <div className="text-4xl">📭</div>
-            <h3 className="text-base font-bold text-zinc-200">No Exam Notices Recorded</h3>
-            <p className="text-xs text-zinc-500 max-w-sm mx-auto">
-              {changes.length === 0
-                ? 'Your local database is fresh. Click below to load realistic Indian government exam notices, or scan live portals.'
-                : 'No notifications matched your active filter or search keywords.'}
-            </p>
-            {changes.length === 0 && (
-              <div className="flex items-center justify-center gap-3 pt-2">
+            <div className="mt-4 flex flex-wrap gap-2">
+              {['all', ...SOURCES].map((item) => (
                 <button
-                  onClick={onSeedDemo}
-                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-xs font-bold rounded-xl border border-zinc-700 shadow-sm transition"
+                  key={item}
+                  onClick={() => setSourceFilter(item)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${sourceFilter === item ? 'border-[#E11D48] bg-[#E11D48] text-white shadow-[0_0_18px_rgba(225,29,72,0.18)]' : 'border-[var(--border)] bg-[var(--surface-alt)] text-[var(--text)] hover:border-[#E11D48]/40'}`}
                 >
-                  🌱 Load Demo Notices
+                  {item === 'all' ? 'All boards' : item}
                 </button>
+              ))}
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[{ key: 'all', label: 'All updates' }, ...TYPES].map((item) => (
                 <button
-                  onClick={onCheckNow}
-                  disabled={checking}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl shadow-[0_0_15px_rgba(99,102,241,0.3)] transition"
+                  key={item.key}
+                  onClick={() => setTypeFilter(item.key)}
+                  className={`rounded-full border px-2.5 py-1.5 text-[11px] font-medium transition-colors ${typeFilter === item.key ? 'border-[#E11D48] bg-[#E11D48] text-white shadow-[0_0_18px_rgba(225,29,72,0.18)]' : 'border-[var(--border)] bg-[var(--surface-alt)] text-[var(--text)] hover:border-[#E11D48]/40'}`}
                 >
-                  ⚡ Scan Portals Now
+                  {item.label}
                 </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={`${cardBase} overflow-hidden`}>
+            {loading ? (
+              <div className="space-y-3 p-6">
+                {[1,2,3].map((i) => (
+                  <div key={i} className="h-24 animate-pulse rounded-2xl bg-[var(--surface-alt)]" />
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="p-10 text-center">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--surface-alt)] text-[var(--text)]">
+                  <Sparkles className="h-5 w-5 text-[#E11D48]" />
+                </div>
+                <div className="text-lg font-semibold text-[var(--text)]">No matching updates</div>
+                <p className="mt-2 text-sm text-[var(--muted)]">
+                  {changes.length === 0 ? 'There are no updates yet. Load demo data or scan portals now.' : 'Try another board or change-type filter.'}
+                </p>
+                <div className="mt-4 flex justify-center gap-3">
+                  <button onClick={onSeedDemo} className="rounded-xl bg-[var(--surface-alt)] px-3 py-2 text-xs font-medium text-[var(--text)]">Load demo data</button>
+                  <button onClick={onCheckNow} disabled={checking} className="rounded-xl bg-gradient-to-r from-[#E11D48] to-[#F97316] px-3 py-2 text-xs font-semibold text-white">{checking ? 'Scanning...' : 'Scan now'}</button>
+                </div>
+              </div>
+            ) : (
+              <div className="divide-y divide-[var(--border)]">
+                {filtered.map((item) => {
+                  const typeConfig = TYPE_MAP[item.changeType] ?? TYPES[0];
+                  const boardClass = boardColors[item.source] ?? 'bg-[var(--surface-alt)] text-[var(--muted)] border-[var(--border)]';
+
+                  return (
+                    <motion.div
+                      key={item._id}
+                      layout
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      onClick={() => onInspect(item)}
+                      className="cursor-pointer p-4 transition hover:bg-[var(--surface-alt)] md:p-5"
+                    >
+                      <div className="w-full">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${boardClass}`}>
+                            {item.source}
+                          </span>
+                          <span className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${typeConfig.badge}`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${typeConfig.dot}`} />
+                            {typeConfig.label}
+                          </span>
+                          <span className="text-[11px] text-[var(--muted)]">{relativeTime(item.detectedAt)}</span>
+                        </div>
+
+                        <div className="mt-3 space-y-2">
+                          <div className="text-base font-semibold text-[var(--text)]">{item.examName ?? 'Exam update'}</div>
+                          <p className="max-w-2xl text-sm leading-6 text-[var(--muted)]">{item.summary}</p>
+                        </div>
+
+                        {(item.oldValue || item.newValue) && (
+                          <div className="mt-4 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-alt)] p-3 font-mono text-[11px]">
+                            <div className="flex flex-wrap gap-2 text-[var(--muted)]">
+                              <span className="text-rose-400 line-through">{item.oldValue ?? 'None'}</span>
+                              <span className="text-[var(--muted)]">→</span>
+                              <span className="text-emerald-400">{item.newValue ?? 'Updated'}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] pt-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {item.pdfUrl && (
+                              <a href={item.pdfUrl} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()} className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-alt)] px-2.5 py-2 text-[11px] font-medium text-[var(--text)]">
+                                <FileText className="h-3.5 w-3.5" />
+                                Notice PDF
+                              </a>
+                            )}
+                            {item.effectiveDate && (
+                              <span className="inline-flex items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--surface-alt)] px-2 py-1 text-[10px] font-medium text-[var(--muted)]">
+                                <CalendarClock className="h-3 w-3" />
+                                {formatDate(item.effectiveDate)}
+                              </span>
+                            )}
+                          </div>
+
+                          <button className="inline-flex items-center gap-2 rounded-xl bg-[var(--surface-alt)] px-2.5 py-2 text-[11px] font-medium text-[var(--text)]">
+                            Details
+                            <ArrowRight className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             )}
           </div>
-        ) : (
-          <div className="divide-y divide-zinc-800/60">
-            {filtered.map((c) => {
-              const typeConfig = TYPE_MAP[c.changeType] ?? TYPES[0];
+        </div>
 
-              return (
-                <div
-                  key={c._id}
-                  onClick={() => onInspect(c)}
-                  className="p-4 sm:p-5 hover:bg-zinc-800/40 transition duration-150 cursor-pointer group flex flex-col md:flex-row md:items-center justify-between gap-4"
-                >
-                  {/* Left Metadata & Summary */}
-                  <div className="space-y-2 flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 font-mono text-[10px] font-bold tracking-wide border border-zinc-700/60">
-                        {c.source}
-                      </span>
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${typeConfig.badge}`}
-                      >
-                        <span className={`h-1.5 w-1.5 rounded-full ${typeConfig.dot}`} />
-                        {typeConfig.label}
-                      </span>
-                      {c.examName && (
-                        <span className="text-xs font-bold text-zinc-300 truncate">
-                          {c.examName}
-                        </span>
-                      )}
-                      <span className="text-[11px] text-zinc-500 font-mono">
-                        • {relativeTime(c.detectedAt)}
-                      </span>
-                    </div>
-
-                    <p className="text-sm font-medium text-zinc-100 group-hover:text-indigo-400 transition leading-snug">
-                      {c.summary}
-                    </p>
-
-                    {/* Before -> After Diff Pill */}
-                    {(c.oldValue || c.newValue) && (
-                      <div className="inline-flex items-center gap-2 text-xs font-mono bg-zinc-950/60 px-2.5 py-1 rounded-lg border border-zinc-800">
-                        <span className="text-zinc-500 text-[10px] uppercase font-bold">
-                          {c.changedField ?? 'Delta'}:
-                        </span>
-                        <span className="text-rose-400/80 line-through">
-                          {c.oldValue ?? 'None'}
-                        </span>
-                        <span className="text-zinc-500 font-bold">➔</span>
-                        <span className="text-emerald-400 font-bold">
-                          {c.newValue ?? 'Updated'}
-                        </span>
-                      </div>
-                    )}
+        <aside className="space-y-5">
+          <div className={`${cardBase} p-4`}>
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold text-[var(--text)]">Upcoming deadlines</div>
+              <CalendarClock className="h-4 w-4 text-[var(--muted)]" />
+            </div>
+            <div className="mt-4 space-y-3">
+              {deadlineCards.map((item) => (
+                <div key={item.label} className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-[var(--surface-alt)] px-3 py-2.5">
+                  <div>
+                    <div className="text-sm font-medium text-[var(--text)]">{item.label}</div>
+                    <div className="text-[11px] text-[var(--muted)]">{item.status}</div>
                   </div>
-
-                  {/* Right Actions: PDF link & Inspect */}
-                  <div className="flex items-center gap-3 self-start md:self-center shrink-0">
-                    {c.pdfUrl && (
-                      <a
-                        href={c.pdfUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 transition"
-                      >
-                        <span>📄 PDF</span>
-                      </a>
-                    )}
-                    {c.effectiveDate && (
-                      <span className="text-xs text-zinc-400 font-mono hidden lg:inline">
-                        📅 {formatDate(c.effectiveDate)}
-                      </span>
-                    )}
-                    <span className="text-zinc-600 group-hover:text-indigo-400 group-hover:translate-x-1 transition duration-150 text-sm font-bold">
-                      ➔
-                    </span>
-                  </div>
+                  <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${getDeadlineTone(item.days)}`}>
+                    {item.date}
+                  </span>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        )}
+
+          <div className={`${cardBase} p-4`}>
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-sm font-semibold text-[var(--text)]">14-day activity</div>
+              <div className="text-[11px] text-[var(--muted)]">+24%</div>
+            </div>
+            <div className="h-40 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={activityData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="activityFill" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="#E11D48" stopOpacity={0.34} />
+                      <stop offset="100%" stopColor="#F97316" stopOpacity={0.04} />
+                    </linearGradient>
+                  </defs>
+                  <Tooltip
+                    cursor={{ stroke: 'rgba(225,29,72,0.35)' }}
+                    contentStyle={{
+                      borderRadius: 12,
+                      border: '1px solid rgba(240,221,208,1)',
+                      background: 'rgba(255,255,255,0.96)',
+                      color: '#4A2C3F',
+                    }}
+                  />
+                  <Area type="monotone" dataKey="value" stroke="#E11D48" strokeWidth={2.5} fill="url(#activityFill)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   );

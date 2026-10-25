@@ -1,8 +1,23 @@
+jest.mock('../src/services/telegram', () => ({
+  sendAlert: jest.fn(),
+  format: jest.fn((change) => `formatted:${change.source}:${change.changeType}`),
+}));
+
+jest.mock('../src/services/whatsapp', () => ({
+  sendWhatsApp: jest.fn(),
+}));
+
+jest.mock('../src/services/email', () => ({
+  sendEmail: jest.fn(),
+}));
+
 const { matches } = require('../src/services/alerting');
+const { sendAlert } = require('../src/services/telegram');
 const { recordExam, processSource } = require('../src/services/pipeline');
 const { buildPrompt } = require('../src/services/aiExtraction');
 const Exam = require('../src/models/Exam');
 const SourceSnapshot = require('../src/models/SourceSnapshot');
+const User = require('../src/models/User');
 const { connectDB, disconnectDB } = require('../src/config/db');
 
 beforeAll(async () => {
@@ -61,6 +76,31 @@ describe('Pipeline & Alerting Test Suite', () => {
     expect(prompt).toContain('SSC CGL 2026');
     expect(prompt).toContain('15 Aug 2026');
     expect(prompt).toContain('Official Corrigendum');
+  });
+
+  test('alertChange uses the configured Telegram fallback when a user has Telegram enabled but no stored chat ID', async () => {
+    const userFindSpy = jest.spyOn(User, 'find').mockResolvedValue([
+      {
+        _id: 'user-1',
+        telegramChatId: null,
+        whatsappNumber: '+919999999999',
+        email: 'user@example.com',
+        prefs: { channels: { telegram: true, whatsapp: false, email: false } },
+      },
+    ]);
+
+    sendAlert.mockResolvedValue(true);
+
+    const result = await require('../src/services/alerting').alertChange(
+      { source: 'SSC', examName: 'SSC CGL 2026', changeType: 'date_change', summary: 'Date revised', detectedAt: new Date() },
+      '9991112223'
+    );
+
+    expect(sendAlert).toHaveBeenCalledWith(expect.objectContaining({ source: 'SSC' }), '9991112223');
+    expect(result.notified).toBe(1);
+
+    userFindSpy.mockRestore();
+    sendAlert.mockReset();
   });
 
   test('recordExam appends versioned history correctly', async () => {

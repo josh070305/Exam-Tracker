@@ -1,4 +1,5 @@
 const cron = require('node-cron');
+const { env } = require('../config/env');
 const { runAllSources } = require('../services/pipeline');
 const { persistToDisk } = require('../storage');
 
@@ -23,9 +24,9 @@ async function scheduledRun() {
 }
 
 function startScheduler() {
-  // Every 2 hours.
-  cron.schedule('0 */2 * * *', scheduledRun);
-  console.log('[Scheduler] Cron active: every 2 hours (0 */2 * * *)');
+  const schedule = env.CRON_SCHEDULE || '*/30 * * * *';
+  cron.schedule(schedule, scheduledRun);
+  console.log(`[Scheduler] Cron active: ${schedule}`);
 }
 
 module.exports = { startScheduler, scheduledRun, runAllSources };

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MessageSquareText, SendHorizontal } from 'lucide-react';
 
 interface TelegramSimulatorProps {
   apiBase: string;
@@ -14,22 +15,14 @@ export const TelegramSimulator: React.FC<TelegramSimulatorProps> = ({ apiBase })
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: 'bot',
-      text:
-        '👋 Welcome to the interactive Telegram Bot simulator! Send any command like `/start`, `/myexams`, `/subscribe SSC`, or `/latest SSC` to test the bot live.',
+      text: 'Welcome to GovExam Alerts. Send /start, /myexams, /subscribe SSC, or /latest SSC to try the command flows.',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const quickCommands = [
-    '/start',
-    '/myexams',
-    '/subscribe SSC',
-    '/latest SSC',
-    '/check',
-    '/help',
-  ];
+  const quickCommands = ['/start', '/myexams', '/subscribe SSC', '/latest SSC', '/check', '/help'];
 
   const sendCommand = async (cmdText: string) => {
     const textToSend = cmdText.trim();
@@ -63,11 +56,7 @@ export const TelegramSimulator: React.FC<TelegramSimulatorProps> = ({ apiBase })
     } catch {
       setMessages((prev) => [
         ...prev,
-        {
-          sender: 'bot',
-          text: '❌ Bot simulation service unavailable. Ensure backend is running.',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
+        { sender: 'bot', text: 'Bot service unavailable. Ensure the backend is running.', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
       ]);
     } finally {
       setLoading(false);
@@ -75,108 +64,80 @@ export const TelegramSimulator: React.FC<TelegramSimulatorProps> = ({ apiBase })
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4 animate-fade">
-      {/* Header Info */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-            <span>💬</span>
-            <span>Interactive Telegram Bot Simulator</span>
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Test the command router, automated responses, and subscription workflows directly in your browser.
-          </p>
-        </div>
-        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          Bot Online
-        </span>
-      </div>
-
-      {/* Telegram Chat Mock Window */}
-      <div className="bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl overflow-hidden flex flex-col h-[580px]">
-        {/* Chat App Header */}
-        <div className="bg-slate-800/90 backdrop-blur px-5 py-3.5 border-b border-slate-700 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-sky-400 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow">
-            ✈️
+    <div className="mx-auto max-w-3xl">
+      <div className="mb-5 flex items-center justify-between gap-3 rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FDE7EE] to-[#F9E6D6] text-[#E11D48]">
+            <MessageSquareText className="h-5 w-5" />
           </div>
           <div>
-            <div className="font-bold text-sm text-white flex items-center gap-1.5">
-              <span>GovExam Alerts Bot</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 font-semibold">
-                BOT
-              </span>
-            </div>
-            <div className="text-[11px] text-sky-400 font-medium">@GovExamTrackerBot • Active</div>
+            <div className="text-lg font-semibold text-[var(--text)]">Telegram bot simulator</div>
+            <div className="text-sm text-[var(--muted)]">Test the command router and alerts in-browser</div>
           </div>
         </div>
+        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-medium text-emerald-300">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          Bot online
+        </div>
+      </div>
 
-        {/* Message Bubble Feed */}
-        <div className="flex-1 p-5 space-y-3.5 overflow-y-auto bg-slate-950/70">
-          {messages.map((m, idx) => (
-            <div
-              key={idx}
-              className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}
-            >
-              <div
-                className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm whitespace-pre-wrap leading-relaxed shadow-sm ${
-                  m.sender === 'user'
-                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-br-none'
-                    : 'bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-none'
-                }`}
-              >
-                {m.text}
+      <div className="overflow-hidden rounded-[28px] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)]">
+        <div className="flex items-center gap-3 border-b border-[var(--border)] bg-[var(--surface-alt)] px-4 py-3.5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#E11D48] to-[#F97316] text-sm font-semibold text-white">G</div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text)]">
+              GovExam Alerts Bot
+              <span className="rounded-full border border-[#E11D48]/30 bg-[#FDE7EE] px-1.5 py-0.5 text-[9px] uppercase tracking-[0.12em] text-[#E11D48]">Bot</span>
+            </div>
+            <div className="text-[11px] text-[var(--muted)]">@GovExamTrackerBot • Active</div>
+          </div>
+          <div className="flex h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.9)]" />
+        </div>
+
+        <div className="flex h-[440px] flex-col bg-[var(--surface)]">
+          <div className="flex-1 space-y-3 overflow-y-auto p-4">
+            {messages.map((message, index) => (
+              <div key={`${message.time}-${index}`} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-6 ${message.sender === 'user' ? 'rounded-br-md bg-gradient-to-r from-[#E11D48] to-[#F97316] text-white' : 'rounded-bl-md border border-[var(--border)] bg-[var(--surface-alt)] text-[var(--text)]'}`}>
+                  {message.text}
+                </div>
               </div>
-              <span className="text-[10px] text-slate-500 mt-1 px-1">{m.time}</span>
+            ))}
+
+            {loading && (
+              <div className="flex justify-start">
+                <div className="inline-flex items-center gap-2 rounded-2xl rounded-bl-md border border-[var(--border)] bg-[var(--surface-alt)] px-3 py-2 text-[11px] text-[var(--muted)]">
+                  Bot typing
+                  <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
+                  <span className="animate-bounce" style={{ animationDelay: '150ms' }}>.</span>
+                  <span className="animate-bounce" style={{ animationDelay: '300ms' }}>.</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-[var(--border)] bg-[var(--surface-alt)] p-3">
+            <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
+              {quickCommands.map((command) => (
+                <button key={command} onClick={() => sendCommand(command)} className="whitespace-nowrap rounded-full border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-[10px] font-medium text-[var(--muted)] transition hover:text-[var(--text)]">
+                  {command}
+                </button>
+              ))}
             </div>
-          ))}
 
-          {loading && (
-            <div className="flex items-center gap-1.5 bg-slate-800 text-slate-400 px-3.5 py-2 rounded-2xl w-fit text-xs animate-pulse">
-              <span>Bot typing</span>
-              <span className="animate-bounce">.</span>
-              <span className="animate-bounce delay-100">.</span>
-              <span className="animate-bounce delay-200">.</span>
-            </div>
-          )}
+            <form onSubmit={(event) => { event.preventDefault(); void sendCommand(input); }} className="flex items-center gap-2">
+              <input
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                placeholder="Type a command..."
+                className="flex-1 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2.5 text-sm text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[#E11D48] focus:outline-none focus:ring-2 focus:ring-[#E11D48]/20"
+              />
+              <button type="submit" disabled={!input.trim() || loading} className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-r from-[#E11D48] to-[#F97316] text-white disabled:opacity-60">
+                <SendHorizontal className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
         </div>
-
-        {/* Quick Suggestion Chips */}
-        <div className="px-4 py-2 bg-slate-900 border-t border-slate-800 flex items-center gap-1.5 overflow-x-auto">
-          <span className="text-[11px] text-slate-500 whitespace-nowrap font-medium">Try:</span>
-          {quickCommands.map((cmd) => (
-            <button
-              key={cmd}
-              onClick={() => sendCommand(cmd)}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-mono whitespace-nowrap transition border border-slate-700"
-            >
-              {cmd}
-            </button>
-          ))}
-        </div>
-
-        {/* Chat Input Bar */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            sendCommand(input);
-          }}
-          className="p-3.5 bg-slate-850 border-t border-slate-800 flex items-center gap-2"
-        >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a command (e.g. /subscribe SSC, /latest, /myexams)..."
-            className="flex-1 bg-slate-900 text-slate-100 text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-          />
-          <button
-            type="submit"
-            disabled={!input.trim() || loading}
-            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs sm:text-sm font-bold shadow transition"
-          >
-            Send
-          </button>
-        </form>
       </div>
     </div>
   );

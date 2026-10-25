@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BellRing, Mail, MessageSquareText, ShieldCheck, Smartphone, Sparkles } from 'lucide-react';
 import { UserDoc, SOURCES, TYPES } from '../types';
 
 interface PreferencesViewProps {
@@ -8,18 +9,11 @@ interface PreferencesViewProps {
   showToast: (t: { kind: 'success' | 'info' | 'error'; msg: string }) => void;
 }
 
-export const PreferencesView: React.FC<PreferencesViewProps> = ({
-  user,
-  apiBase,
-  onSaved,
-  showToast,
-}) => {
+export const PreferencesView: React.FC<PreferencesViewProps> = ({ user, apiBase, onSaved, showToast }) => {
   const [sources, setSources] = useState<string[]>(user?.prefs?.sources ?? []);
   const [exams, setExams] = useState<string>((user?.prefs?.exams ?? []).join(', '));
   const [types, setTypes] = useState<string[]>(user?.prefs?.types ?? []);
-  const [channels, setChannels] = useState(
-    user?.prefs?.channels ?? { telegram: true, whatsapp: false, email: false }
-  );
+  const [channels, setChannels] = useState(user?.prefs?.channels ?? { telegram: true, whatsapp: false, email: false });
   const [telegramChatId, setTelegramChatId] = useState<string>(user?.telegramChatId ?? '');
   const [whatsappNumber, setWhatsappNumber] = useState<string>(user?.whatsappNumber ?? '');
   const [email, setEmail] = useState<string>(user?.email ?? '');
@@ -37,40 +31,38 @@ export const PreferencesView: React.FC<PreferencesViewProps> = ({
     }
   }, [user]);
 
-  const toggleSource = (s: string) => {
-    setSources((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+  const toggleSource = (source: string) => {
+    setSources((prev) => (prev.includes(source) ? prev.filter((item) => item !== source) : [...prev, source]));
   };
 
-  const toggleType = (t: string) => {
-    setTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
+  const toggleType = (type: string) => {
+    setTypes((prev) => (prev.includes(type) ? prev.filter((item) => item !== type) : [...prev, type]));
   };
 
   const save = async () => {
     if (!user) return;
     setSaving(true);
     try {
-      // 1. Update contact channels
-      const profRes = await fetch(`${apiBase}/users/${user._id}`, {
+      const profileResponse = await fetch(`${apiBase}/users/${user._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegramChatId, whatsappNumber, email }),
       });
-      if (!profRes.ok) throw new Error('Failed to update contact channels');
+      if (!profileResponse.ok) throw new Error('Failed to update contact channels');
 
-      // 2. Update alert preferences
-      const prefRes = await fetch(`${apiBase}/users/${user._id}/preferences`, {
+      const preferencesResponse = await fetch(`${apiBase}/users/${user._id}/preferences`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sources,
-          exams: exams.split(',').map((s) => s.trim()).filter(Boolean),
+          exams: exams.split(',').map((item) => item.trim()).filter(Boolean),
           types,
           channels,
         }),
       });
-      if (!prefRes.ok) throw new Error('Failed to update preferences');
+      if (!preferencesResponse.ok) throw new Error('Failed to update preferences');
 
-      showToast({ kind: 'success', msg: 'Alert preferences saved successfully! ✅' });
+      showToast({ kind: 'success', msg: 'Alert preferences saved successfully.' });
       onSaved();
     } catch (err: any) {
       showToast({ kind: 'error', msg: err.message || 'Save failed' });
@@ -80,168 +72,97 @@ export const PreferencesView: React.FC<PreferencesViewProps> = ({
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-fade">
-      <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 shadow-2xl p-6 sm:p-8 backdrop-blur-md">
-        <div className="border-b border-zinc-800/80 pb-5">
-          <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-            <span>⚙️</span>
-            <span>Aspirant Notification Profile & Channel Routing</span>
-          </h2>
-          <p className="text-xs text-zinc-400 mt-1">
-            Configure customized exam keyword filters and automated multi-channel alert delivery.
-          </p>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-soft)] md:p-6">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#F9DDE4] to-[#FDE5D3] text-[#E11D48]">
+            <ShieldCheck className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-lg font-semibold text-[var(--text)]">Notification preferences</div>
+            <div className="text-sm text-[var(--muted)]">Configure boards, keyword filters, and delivery channels</div>
+          </div>
         </div>
 
-        {/* Channels Credentials */}
-        <div className="mt-6 space-y-4">
-          <h3 className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-bold">
-            Dispatch Channels & Contact Info
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                Telegram Chat ID
-              </label>
-              <input
-                value={telegramChatId}
-                onChange={(e) => setTelegramChatId(e.target.value)}
-                placeholder="e.g. 7171410498"
-                className="w-full text-xs sm:text-sm border border-zinc-800 rounded-xl px-3.5 py-2.5 bg-zinc-950 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500 font-mono"
-              />
-              <p className="text-[10px] text-zinc-500 mt-1">
-                From @RawDataBot or send <code className="bg-zinc-800 px-1 py-0.2 rounded text-zinc-300">/start</code> in the Telegram bot.
-              </p>
+        <div className="grid gap-6 xl:grid-cols-2">
+          <div className="space-y-5">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-alt)] p-4">
+              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[var(--text)]"><BellRing className="h-4 w-4 text-emerald-400" /> Alert channels</div>
+              <div className="space-y-3">
+                {[
+                  { key: 'telegram', label: 'Telegram', Icon: MessageSquareText, active: channels.telegram },
+                  { key: 'whatsapp', label: 'WhatsApp', Icon: Smartphone, active: channels.whatsapp },
+                  { key: 'email', label: 'Email', Icon: Mail, active: channels.email },
+                ].map(({ key, label, Icon, active }) => (
+                  <label key={key} className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-3 py-3">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-alt)] text-[var(--text)]"><Icon className="h-4 w-4" /></span>
+                      <span className="text-sm font-medium text-[var(--text)]">{label}</span>
+                    </div>
+                    <input type="checkbox" checked={active} onChange={(event) => setChannels((prev) => ({ ...prev, [key]: event.target.checked }))} className="h-4 w-4 accent-[#E11D48]" />
+                  </label>
+                ))}
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                WhatsApp Number (E.164)
-              </label>
-              <input
-                value={whatsappNumber}
-                onChange={(e) => setWhatsappNumber(e.target.value)}
-                placeholder="+919876543210"
-                className="w-full text-xs sm:text-sm border border-zinc-800 rounded-xl px-3.5 py-2.5 bg-zinc-950 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500 font-mono"
-              />
-              <p className="text-[10px] text-zinc-500 mt-1">Twilio WhatsApp Sandbox format</p>
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                Email Address
-              </label>
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="aspirant@example.com"
-                className="w-full text-xs sm:text-sm border border-zinc-800 rounded-xl px-3.5 py-2.5 bg-zinc-950 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500 font-mono"
-              />
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-alt)] p-4">
+              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[var(--text)]"><Sparkles className="h-4 w-4 text-[#E11D48]" /> Boards to watch</div>
+              <div className="flex flex-wrap gap-2">
+                {SOURCES.map((source) => {
+                  const active = sources.includes(source);
+                  return (
+                    <button key={source} onClick={() => toggleSource(source)} className={`rounded-full border px-3 py-1.5 text-[11px] font-medium ${active ? 'border-[#E11D48]/40 bg-[#FDE7EE] text-[#4A2C3F]' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--muted)]'}`}>
+                      {source}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Recruitment Boards Filter */}
-        <div className="mt-6">
-          <h3 className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-bold">
-            Recruitment Boards to Watch
-          </h3>
-          <div className="mt-2.5 flex flex-wrap gap-2">
-            {SOURCES.map((s) => {
-              const active = sources.includes(s);
-              return (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => toggleSource(s)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-mono transition ${
-                    active
-                      ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(99,102,241,0.4)]'
-                      : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700'
-                  }`}
-                >
-                  {s}
-                </button>
-              );
-            })}
+          <div className="space-y-5">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-alt)] p-4">
+              <div className="mb-3 text-sm font-medium text-[var(--text)]">Contact details</div>
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]">Telegram chat ID</label>
+                  <input value={telegramChatId} onChange={(event) => setTelegramChatId(event.target.value)} placeholder="e.g. 7171410498" className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-sm text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[#E11D48] focus:outline-none focus:ring-2 focus:ring-[#E11D48]/20" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]">WhatsApp number</label>
+                  <input value={whatsappNumber} onChange={(event) => setWhatsappNumber(event.target.value)} placeholder="+91..." className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-sm text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[#E11D48] focus:outline-none focus:ring-2 focus:ring-[#E11D48]/20" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]">Email address</label>
+                  <input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-sm text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[#E11D48] focus:outline-none focus:ring-2 focus:ring-[#E11D48]/20" />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-alt)] p-4">
+              <div className="mb-3 text-sm font-medium text-[var(--text)]">Alert categories</div>
+              <div className="flex flex-wrap gap-2">
+                {TYPES.map((type) => {
+                  const active = types.includes(type.key);
+                  return (
+                    <button key={type.key} onClick={() => toggleType(type.key)} className={`rounded-full border px-3 py-1.5 text-[11px] font-medium ${active ? 'border-[#E11D48]/40 bg-[#FDE7EE] text-[#4A2C3F]' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--muted)]'}`}>
+                      {type.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-alt)] p-4">
+              <div className="mb-2 text-sm font-medium text-[var(--text)]">Keywords</div>
+              <textarea value={exams} onChange={(event) => setExams(event.target.value)} placeholder="SSC CGL, UPSC CSE, IBPS PO..." className="min-h-[96px] w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-sm text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[#E11D48] focus:outline-none focus:ring-2 focus:ring-[#E11D48]/20" />
+            </div>
           </div>
         </div>
 
-        {/* Specific Exam Keywords */}
-        <div className="mt-6">
-          <h3 className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-bold">
-            Specific Exam Keywords (Substring Filter)
-          </h3>
-          <input
-            value={exams}
-            onChange={(e) => setExams(e.target.value)}
-            placeholder="e.g. SSC CGL, RRB NTPC, UPSC CSE, TNPSC Group 2"
-            className="mt-2 w-full text-xs sm:text-sm border border-zinc-800 rounded-xl px-3.5 py-2.5 bg-zinc-950 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500"
-          />
-          <p className="text-[10px] text-zinc-500 mt-1">
-            Comma-separated. Leave empty to receive alerts for all exams under selected boards.
-          </p>
-        </div>
-
-        {/* Change Types Filter */}
-        <div className="mt-6">
-          <h3 className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-bold">
-            Alert Categories
-          </h3>
-          <div className="mt-2.5 flex flex-wrap gap-2">
-            {TYPES.map((t) => {
-              const active = types.includes(t.key);
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => toggleType(t.key)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition ${
-                    active
-                      ? 'bg-zinc-100 text-zinc-900 font-bold shadow'
-                      : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
-                  }`}
-                >
-                  {t.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Active Dispatch Channels */}
-        <div className="mt-6">
-          <h3 className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-bold">
-            Active Alert Channels
-          </h3>
-          <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {(['telegram', 'whatsapp', 'email'] as const).map((ch) => (
-              <label
-                key={ch}
-                className="flex items-center gap-2.5 p-3.5 rounded-xl border border-zinc-800 hover:bg-zinc-800/50 cursor-pointer transition bg-zinc-950/60"
-              >
-                <input
-                  type="checkbox"
-                  checked={channels[ch]}
-                  onChange={(e) =>
-                    setChannels((prev) => ({ ...prev, [ch]: e.target.checked }))
-                  }
-                  className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 bg-zinc-900 border-zinc-700"
-                />
-                <span className="text-xs font-bold uppercase text-zinc-300 font-mono">{ch}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Save Action */}
-        <div className="mt-8 pt-6 border-t border-zinc-800/80 flex items-center justify-end">
-          <button
-            onClick={save}
-            disabled={saving || !user}
-            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(99,102,241,0.3)] active:scale-95 disabled:opacity-50 transition"
-          >
-            {saving ? 'Saving...' : 'Save Preferences'}
+        <div className="mt-6 flex justify-end">
+          <button onClick={save} disabled={saving || !user} className="rounded-xl bg-gradient-to-r from-[#E11D48] to-[#F97316] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_0_24px_rgba(225,29,72,0.18)] disabled:opacity-60">
+            {saving ? 'Saving...' : 'Save preferences'}
           </button>
         </div>
       </div>

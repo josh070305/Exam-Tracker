@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const { env } = require('./config/env');
 const { connectDB } = require('./config/db');
 const healthRoutes = require('./routes/health');
@@ -8,12 +9,36 @@ const examsRoutes = require('./routes/exams');
 const usersRoutes = require('./routes/users');
 const streamRoutes = require('./routes/stream');
 const demoRoutes = require('./routes/demo');
+const agentRoutes = require('./routes/agent');
 const { startScheduler } = require('./jobs/scheduler');
-const { initBot } = require('./services/telegram');
+const { initBot, registerWebhookRoute } = require('./services/telegram');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+registerWebhookRoute(app);
+const allowedOrigins = [
+  env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+].filter(Boolean);
+
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  contentSecurityPolicy: false,
+}));
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
+app.use(express.json({ limit: '1mb' }));
 
 app.use('/api', healthRoutes);
 app.use('/api', changesRoutes);
@@ -21,6 +46,7 @@ app.use('/api', examsRoutes);
 app.use('/api', usersRoutes);
 app.use('/api', streamRoutes);
 app.use('/api', demoRoutes);
+app.use('/api', agentRoutes);
 
 // 404 fallback
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));

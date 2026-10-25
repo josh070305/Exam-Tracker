@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="GovExam Intelligence icon">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="26" fill="#070b17"/>
+  <circle cx="64" cy="64" r="46" fill="url(#g)" opacity="0.18"/>
+  <path d="M38 44h52v10H54v11h30v10H54v11h36v10H38V44z" fill="url(#g)"/>
+  <path d="M82 34l18 30-18 30h12l18-30-18-30h-12z" fill="#E2E8F0" opacity="0.9"/>
+</svg>

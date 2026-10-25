@@ -1,10 +1,16 @@
 const express = require('express');
 const router = express.Router();
+const { env } = require('../config/env');
 const ExamChange = require('../models/ExamChange');
 const Exam = require('../models/Exam');
 const User = require('../models/User');
 const { broadcast } = require('../services/sse');
 const { recordExam } = require('../services/pipeline');
+
+router.use((req, res, next) => {
+  if (env.DEMO_MODE) return next();
+  return res.status(403).json({ error: 'Demo mode is disabled.' });
+});
 
 const SAMPLE_EXAM_UPDATES = [
   {
@@ -82,6 +88,33 @@ const SAMPLE_EXAM_UPDATES = [
 ];
 
 // POST /api/demo/seed — injects realistic Indian exam notices into DB & SSE stream
+router.post('/demo/simulate', async (req, res) => {
+  try {
+    const { source = 'SSC', examName = 'SSC CGL 2026', summary = 'Demo notification simulated for testing.' } = req.body || {};
+    const change = await ExamChange.create({
+      source,
+      board: source,
+      examName,
+      changeType: 'NEW_NOTIFICATION',
+      changedField: 'status',
+      oldValue: 'No update',
+      newValue: 'Live demo alert',
+      summary,
+      importance: 'MEDIUM',
+      confidence: 0.9,
+      detectedAt: new Date(),
+      contentHash: `demo-simulate-${Date.now()}`,
+    });
+
+    await recordExam(change);
+    broadcast('exam_update', change);
+    res.json({ message: 'Demo alert simulated successfully', change });
+  } catch (err) {
+    console.error('[Demo Simulate Error]:', err.message);
+    res.status(500).json({ error: 'Demo simulation failed' });
+  }
+});
+
 router.post('/demo/seed', async (req, res) => {
   try {
     const seededChanges = [];

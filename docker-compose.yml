@@ -19,7 +19,9 @@ services:
     environment:
       - PORT=5000
       - MONGODB_URI=mongodb://mongodb:27017/exam-tracker
-      - AI_PROVIDER=groq
+      - AI_PROVIDER=anthropic
+      - DEMO_MODE=true
+      - CRON_SCHEDULE=*/30 * * * *
       - GROQ_API_KEY=${GROQ_API_KEY}
       - GROQ_MODEL=llama-3.3-70b-versatile
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}

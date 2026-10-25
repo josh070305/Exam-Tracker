@@ -7,6 +7,7 @@ const { extractPdfText } = require('./pdfService');
 const { alertChange } = require('./alerting');
 const { broadcast } = require('./sse');
 const { env } = require('../config/env');
+const AgentRun = require('../models/AgentRun');
 
 const VALID_TYPES = [
   'new_exam',
@@ -118,24 +119,27 @@ async function processSource(source) {
     });
 
     // 3. Agentic AI Extraction with context and PDF text
-    const items = await extractChanges(scraped.text, {
+    const aiResult = await extractChanges(scraped.text, {
       source: source.name,
       historicalExams,
       pdfNotices,
     });
 
-    if (items === null) {
+    if (aiResult === null) {
       console.warn(`[Pipeline] AI extraction skipped or rate-limited for ${source.name}.`);
       await updateSnapshot(source.name, scraped.hash);
       return { source: source.name, changed: true, newChanges: 0, skipped: true };
     }
 
-    if (items.metrics) {
+    const items = Array.isArray(aiResult.changes) ? aiResult.changes : [];
+    const metrics = aiResult.metrics || {};
+
+    if (metrics.model) {
       broadcast('agent_log', {
         timestamp: new Date().toISOString(),
         stage: 'AI_TELEMETRY',
         source: source.name,
-        message: `${items.metrics.model} inference completed in ${items.metrics.latencyMs}ms (Tokens: ${items.metrics.promptTokens} prompt + ${items.metrics.completionTokens} completion).`,
+        message: `${metrics.model} inference completed in ${metrics.latencyMs || 0}ms (Tokens: ${metrics.tokensIn || 0} input + ${metrics.tokensOut || 0} output).`,
       });
     }
 
@@ -213,11 +217,40 @@ async function processSource(source) {
 async function runAllSources() {
   const { sources } = require('../scrapers');
   const results = [];
-  for (const source of sources) {
-    const r = await processSource(source);
-    results.push(r);
+  const run = await AgentRun.create({
+    trigger: 'cron',
+    status: 'running',
+    startedAt: new Date(),
+    sourcesChecked: sources.length,
+    model: env.AI_PROVIDER || 'anthropic',
+  });
+
+  try {
+    for (const source of sources) {
+      const r = await processSource(source);
+      results.push(r);
+    }
+
+    await AgentRun.findByIdAndUpdate(run._id, {
+      $set: {
+        finishedAt: new Date(),
+        status: 'completed',
+        changesFound: results.filter((item) => (item.newChanges || 0) > 0).length,
+        sourceResults: results,
+      },
+    });
+    return results;
+  } catch (err) {
+    await AgentRun.findByIdAndUpdate(run._id, {
+      $set: {
+        finishedAt: new Date(),
+        status: 'failed',
+        sourceResults: results,
+        errors: [err.message],
+      },
+    });
+    throw err;
   }
-  return results;
 }
 
 module.exports = { processSource, runAllSources, recordExam };

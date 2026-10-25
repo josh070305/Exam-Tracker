@@ -1,4 +1,6 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { Activity, Bot, Braces, Database, FileUp, Globe, Sparkles, TimerReset } from 'lucide-react';
 import { AgentLog } from '../types';
 
 interface AgentConsoleProps {
@@ -8,106 +10,79 @@ interface AgentConsoleProps {
   checking: boolean;
 }
 
-export const AgentConsole: React.FC<AgentConsoleProps> = ({
-  logs,
-  onClear,
-  onTriggerScan,
-  checking,
-}) => {
-  const getStageBadge = (stage: string) => {
-    switch (stage) {
-      case 'SCRAPE':
-        return 'bg-blue-500/20 text-blue-300 border-blue-500/40';
-      case 'HASH_CHECK':
-        return 'bg-slate-700 text-slate-300 border-slate-600';
-      case 'DIFF_DETECTED':
-        return 'bg-amber-500/20 text-amber-300 border-amber-500/40';
-      case 'PDF_INGEST':
-        return 'bg-purple-500/20 text-purple-300 border-purple-500/40';
-      case 'LLM_REASONING':
-        return 'bg-pink-500/20 text-pink-300 border-pink-500/40 animate-pulse';
-      case 'COMPLETED':
-        return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
-      default:
-        return 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40';
-    }
-  };
+const stageConfig: Record<string, { label: string; className: string; icon: React.ElementType }> = {
+  SCRAPE: { label: 'Scrape', className: 'border-[#E11D48]/30 bg-[#FDE7EE] text-[#E11D48]', icon: Globe },
+  HASH_CHECK: { label: 'Hash check', className: 'border-[#8A6F7C]/30 bg-[#FDEFE6] text-[#4A2C3F]', icon: Database },
+  DIFF_DETECTED: { label: 'Diff detected', className: 'border-[#D97706]/30 bg-[#FFF3D9] text-[#D97706]', icon: Activity },
+  PDF_INGEST: { label: 'PDF parse', className: 'border-[#C026D3]/30 bg-[#FCE7F3] text-[#C026D3]', icon: FileUp },
+  LLM_REASONING: { label: 'LLM reasoning', className: 'border-[#E11D48]/30 bg-[#FDE7EE] text-[#E11D48]', icon: Braces },
+  COMPLETED: { label: 'Completed', className: 'border-[#059669]/30 bg-[#EAFBF4] text-[#059669]', icon: Sparkles },
+};
 
+export const AgentConsole: React.FC<AgentConsoleProps> = ({ logs, onClear, onTriggerScan, checking }) => {
   return (
-    <div className="max-w-5xl mx-auto space-y-4 animate-fade">
-      {/* Console Header */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-xl text-white flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-emerald-400 animate-ping" />
-            <h2 className="text-base font-bold tracking-tight">
-              Autonomous Agent Live Activity Stream
-            </h2>
+    <div className="space-y-5">
+      <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)] md:p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#F9DDE4] to-[#FDE5D3] text-[#E11D48]">
+              <Bot className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-lg font-semibold text-[var(--text)]">Autonomous agent stream</div>
+              <div className="text-sm text-[var(--muted)]">Scraper → hash check → PDF parse → compare → save</div>
+            </div>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
-            Real-time telemetry showing scraper hashing, PDF parsing, context retrieval, and LLM reasoning.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onClear}
-            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-300 transition"
-          >
-            Clear Log
-          </button>
-          <button
-            onClick={onTriggerScan}
-            disabled={checking}
-            className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white shadow-md shadow-indigo-600/30 transition disabled:opacity-50"
-          >
-            {checking ? 'Agent Active...' : '⚡ Trigger Agent Cycle'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={onClear} className="rounded-xl border border-[var(--border)] bg-[var(--surface-alt)] px-3 py-2 text-xs font-medium text-[var(--text)]">Clear log</button>
+            <button onClick={onTriggerScan} disabled={checking} className="rounded-xl bg-gradient-to-r from-[#E11D48] to-[#F97316] px-4 py-2 text-xs font-semibold text-white shadow-[0_0_24px_rgba(225,29,72,0.18)] disabled:opacity-60">
+              {checking ? 'Agent active...' : 'Trigger scan'}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Terminal View */}
-      <div className="bg-slate-950 rounded-2xl border border-slate-800 shadow-2xl p-4 sm:p-6 font-mono text-xs text-slate-300 min-h-[500px] max-h-[70vh] overflow-y-auto flex flex-col justify-start">
-        {logs.length === 0 ? (
-          <div className="text-center py-24 text-slate-500">
-            <span className="text-3xl block mb-2">🤖</span>
-            <p className="font-semibold text-slate-400">Agent telemetry standby.</p>
-            <p className="text-[11px] text-slate-600 mt-1">
-              Click "Trigger Agent Cycle" or "Seed Demo Data" to watch the agent process live notifications.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2.5">
-            {logs.map((log, idx) => (
-              <div
-                key={idx}
-                className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:bg-slate-900 transition"
-              >
-                <span className="text-slate-500 text-[10px] whitespace-nowrap pt-0.5">
-                  {new Date(log.timestamp).toLocaleTimeString('en-IN')}
-                </span>
+      <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)] md:p-5">
+        <div className="mb-4 flex items-center gap-2 text-sm font-medium text-[var(--text)]">
+          <TimerReset className="h-4 w-4 text-emerald-400" />
+          {checking ? 'Agent is scanning...' : 'Agent ready'}
+        </div>
 
-                <span
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold border uppercase tracking-wide whitespace-nowrap ${getStageBadge(
-                    log.stage
-                  )}`}
-                >
-                  {log.stage}
-                </span>
-
-                {log.source && (
-                  <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-bold text-[10px]">
-                    {log.source}
-                  </span>
-                )}
-
-                <span className="text-slate-200 leading-relaxed break-words flex-1">
-                  {log.message}
-                </span>
-              </div>
-            ))}
+        {checking && (
+          <div className="mb-4 flex items-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+            Scraping live sources, comparing hashes, and validating notice changes.
           </div>
         )}
+
+        <div className="space-y-3">
+          {logs.length === 0 ? (
+            <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--surface-alt)] text-sm text-[var(--muted)]">
+              Agent telemetry is idle. Trigger a scan to begin the workflow.
+            </div>
+          ) : (
+            logs.map((log, index) => {
+              const config = stageConfig[log.stage] ?? { label: log.stage, className: 'border-[#E11D48]/30 bg-[#FDE7EE] text-[#E11D48]', icon: Activity };
+              const Icon = config.icon;
+              return (
+                <motion.div key={`${log.timestamp}-${index}`} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} className="flex gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-alt)] p-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text)]">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold ${config.className}`}>{config.label}</span>
+                      {log.source && <span className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-[10px] text-[var(--muted)]">{log.source}</span>}
+                      <span className="text-[10px] text-[var(--muted)]">{new Date(log.timestamp).toLocaleTimeString('en-IN')}</span>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-[var(--text)]">{log.message}</p>
+                  </div>
+                </motion.div>
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
   );

@@ -10,8 +10,7 @@ export const ChangeCard: React.FC<ChangeCardProps> = ({ change, onInspect }) => 
   const typeConfig = TYPE_MAP[change.changeType] ?? TYPES[0];
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm hover:shadow-md transition-all duration-200 animate-fade">
-      {/* Top Header: Badge, Board, Relative Time */}
+    <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] p-5 sm:p-6 shadow-[var(--shadow-soft)] hover:shadow-md transition-all duration-200 animate-fade">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
           <span
@@ -20,45 +19,42 @@ export const ChangeCard: React.FC<ChangeCardProps> = ({ change, onInspect }) => 
             <span className={`h-1.5 w-1.5 rounded-full ${typeConfig.dot}`} />
             {typeConfig.label}
           </span>
-          <span className="px-2.5 py-0.5 rounded-md bg-slate-100 font-bold text-xs text-slate-700">
+          <span className="px-2.5 py-0.5 rounded-md bg-[var(--surface-alt)] font-bold text-xs text-[var(--text)]">
             {change.source}
           </span>
           {change.examName && (
-            <span className="text-xs font-semibold text-slate-600 hidden sm:inline">
+            <span className="text-xs font-semibold text-[var(--muted)] hidden sm:inline">
               • {change.examName}
             </span>
           )}
         </div>
 
-        <span className="text-xs font-medium text-slate-400 whitespace-nowrap">
+        <span className="text-xs font-medium text-[var(--muted)] whitespace-nowrap">
           {relativeTime(change.detectedAt)}
         </span>
       </div>
 
-      {/* Main Notice Summary */}
-      <p className="mt-3 text-sm sm:text-base font-semibold text-slate-900 leading-snug">
+      <p className="mt-3 text-sm sm:text-base font-semibold text-[var(--text)] leading-snug">
         {change.summary}
       </p>
 
-      {/* Value Transition Pills (if old/new value exists) */}
       {(change.oldValue || change.newValue) && (
-        <div className="mt-3.5 flex items-center gap-2 flex-wrap text-xs bg-slate-50/80 p-2.5 rounded-xl border border-slate-100 font-mono">
-          <span className="text-slate-400 font-semibold">{change.changedField ?? 'Change'}:</span>
-          <span className="text-rose-500 font-medium line-through px-1.5 py-0.5 rounded bg-rose-50 border border-rose-100">
+        <div className="mt-3.5 flex items-center gap-2 flex-wrap text-xs bg-[var(--surface-alt)] p-2.5 rounded-xl border border-[var(--border)] font-mono">
+          <span className="text-[var(--muted)] font-semibold">{change.changedField ?? 'Change'}:</span>
+          <span className="text-[#DC2626] font-medium line-through px-1.5 py-0.5 rounded bg-[#FDE7EE] border border-[#F1C2CD]">
             {change.oldValue ?? 'None'}
           </span>
-          <span className="text-slate-400 font-bold">➔</span>
-          <span className="text-emerald-700 font-bold px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-100">
+          <span className="text-[var(--muted)] font-bold">➔</span>
+          <span className="text-[#059669] font-bold px-1.5 py-0.5 rounded bg-[#EAFBF4] border border-[#A9E0C9]">
             {change.newValue ?? 'Updated'}
           </span>
         </div>
       )}
 
-      {/* Footer Actions: Effective Date, PDF Link, Inspect Button */}
-      <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+      <div className="mt-4 pt-3.5 border-t border-[var(--border)] flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
           {change.effectiveDate && (
-            <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200/60 px-2.5 py-0.5 rounded-md font-medium">
+            <span className="text-xs text-[#D97706] bg-[#FFF3D9] border border-[#F4D28A] px-2.5 py-0.5 rounded-md font-medium">
               📅 {formatDate(change.effectiveDate)}
             </span>
           )}
@@ -67,7 +63,7 @@ export const ChangeCard: React.FC<ChangeCardProps> = ({ change, onInspect }) => 
               href={change.pdfUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-md font-semibold transition"
+              className="inline-flex items-center gap-1 text-xs text-[#E11D48] hover:text-[#C51A3F] bg-[#FDE7EE] border border-[#F1C2CD] px-2.5 py-0.5 rounded-md font-semibold transition"
             >
               <span>📄 Official PDF</span>
             </a>
@@ -76,7 +72,7 @@ export const ChangeCard: React.FC<ChangeCardProps> = ({ change, onInspect }) => 
 
         <button
           onClick={onInspect}
-          className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 px-3 py-1 rounded-lg transition"
+          className="inline-flex items-center gap-1 text-xs font-bold text-[var(--text)] hover:text-[#E11D48] bg-[var(--surface-alt)] hover:bg-[#FDE7EE] px-3 py-1 rounded-lg transition"
         >
           <span>Inspect Details</span>
           <span>➔</span>

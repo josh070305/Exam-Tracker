@@ -105,7 +105,7 @@ Key environment variables:
 |---|---|---|
 | `PORT` | Backend service port | `5000` |
 | `MONGODB_URI` | MongoDB connection string | `mongodb://127.0.0.1:27017/exam-tracker` |
-| `AI_PROVIDER` | `groq` (free, default) or `anthropic` | `groq` |
+| `AI_PROVIDER` | `anthropic` (default) or `groq` | `anthropic` |
 | `GROQ_API_KEY` | Free Groq API Key | Obtain from console.groq.com |
 | `TELEGRAM_BOT_TOKEN` | Token from @BotFather for interactive bot | — |
 | `TELEGRAM_CHAT_ID` | Fallback chat ID for direct alerts | — |

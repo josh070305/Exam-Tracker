@@ -38,8 +38,9 @@ async function alertChange(change, fallbackChatId) {
   for (const u of users) {
     if (!matches(change, u.prefs)) continue;
     const ch = (u.prefs && u.prefs.channels) || {};
-    if (ch.telegram && u.telegramChatId) {
-      if (await sendAlert(change, u.telegramChatId)) notified++;
+    const telegramChatId = u.telegramChatId || fallbackChatId;
+    if (ch.telegram && telegramChatId) {
+      if (await sendAlert(change, telegramChatId)) notified++;
     }
     if (ch.whatsapp && u.whatsappNumber) {
       if (await sendWhatsApp(u.whatsappNumber, msg)) notified++;

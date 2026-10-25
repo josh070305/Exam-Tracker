@@ -74,12 +74,12 @@ export interface UserDoc {
 export const SOURCES = ['SSC', 'RRB', 'TNPSC', 'UPSC', 'IBPS', 'SBI'] as const;
 
 export const TYPES = [
-  { key: 'new_exam', label: 'New Exam', bar: 'bg-sky-500', badge: 'bg-sky-500/10 text-sky-400 border-sky-500/25', dot: 'bg-sky-400' },
-  { key: 'date_change', label: 'Date Change', bar: 'bg-amber-500', badge: 'bg-amber-500/10 text-amber-400 border-amber-500/25', dot: 'bg-amber-400' },
-  { key: 'admit_card', label: 'Admit Card', bar: 'bg-purple-500', badge: 'bg-purple-500/10 text-purple-400 border-purple-500/25', dot: 'bg-purple-400' },
-  { key: 'result', label: 'Result', bar: 'bg-emerald-500', badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25', dot: 'bg-emerald-400' },
-  { key: 'eligibility_revised', label: 'Eligibility', bar: 'bg-rose-500', badge: 'bg-rose-500/10 text-rose-400 border-rose-500/25', dot: 'bg-rose-400' },
-  { key: 'corrigendum', label: 'Corrigendum', bar: 'bg-orange-500', badge: 'bg-orange-500/10 text-orange-400 border-orange-500/25', dot: 'bg-orange-400' },
+  { key: 'new_exam', label: 'New Exam', bar: 'bg-[#E11D48]', badge: 'bg-[#E11D48]/10 text-[#E11D48] border-[#E11D48]/25', dot: 'bg-[#E11D48]' },
+  { key: 'date_change', label: 'Date Change', bar: 'bg-[#D97706]', badge: 'bg-[#D97706]/10 text-[#D97706] border-[#D97706]/25', dot: 'bg-[#D97706]' },
+  { key: 'admit_card', label: 'Admit Card', bar: 'bg-[#C026D3]', badge: 'bg-[#C026D3]/10 text-[#C026D3] border-[#C026D3]/25', dot: 'bg-[#C026D3]' },
+  { key: 'result', label: 'Result', bar: 'bg-[#059669]', badge: 'bg-[#059669]/10 text-[#059669] border-[#059669]/25', dot: 'bg-[#059669]' },
+  { key: 'eligibility_revised', label: 'Eligibility', bar: 'bg-[#E11D48]', badge: 'bg-[#E11D48]/10 text-[#E11D48] border-[#E11D48]/25', dot: 'bg-[#E11D48]' },
+  { key: 'corrigendum', label: 'Corrigendum', bar: 'bg-[#EA580C]', badge: 'bg-[#EA580C]/10 text-[#EA580C] border-[#EA580C]/25', dot: 'bg-[#EA580C]' },
 ] as const;
 
 export const TYPE_MAP = Object.fromEntries(TYPES.map((t) => [t.key, t]));
